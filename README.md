@@ -9,6 +9,7 @@ https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/
 
 **Impact:**
 Medium, as it will not lead to the loss of rewards, but makes them unavailable through one method
+
 **Likelihood:**
 Medium, as it occurs only when calling automation
 
