@@ -1,50 +1,52 @@
 
-# [M-02] User may be incorrectly excluded from the list of `activeTokenIds`.
+# [C-02] Calculation in `addPoints` reduces the user's balance.
 
 ### Relevant GitHub Links
 	
-https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L95
+https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceExchange.sol#L100
 
 ## Severity
 
 **Impact:**
-Medium, as it will not lead to the loss of rewards, but makes them unavailable through one method
+High, as this will lead to a monetary loss for users
 
 **Likelihood:**
-Medium, as it occurs only when calling automation
+High, as this will happen any time the user buys points
 
 ## Description
 
-The method `_setReceiver` removes the user's `microgridNftId` from the list of `activeTokenIds` if `_allocPoints == 0` for `_receiver`.
-As it's implemented with this code:
-
-```solidity
-  if (_allocPoints > 0) {
-    if (!activeReceivers[_microgridNftId].contains(_receiver)) {
-      activeReceivers[_microgridNftId].add(_receiver);
-    }
-    if (!activeTokenIds.contains(_microgridNftId)) {
-      activeTokenIds.add(_microgridNftId);
-    }
-  } else {
-    if (activeReceivers[_microgridNftId].contains(_receiver)) {
-      activeReceivers[_microgridNftId].remove(_receiver);
-    }
-    if (activeTokenIds.contains(_microgridNftId)) {
-      activeTokenIds.remove(_microgridNftId);
-    }
-  }
-```
-However, the user may still have other receivers with `_allocPoints > 0`. Excluding a user from the list of `activeTokenIds` will result in him being excluded from the distribution of rewards through a method `performUpkeep` in `FusionAutoClaimUpkeep`.
+The method `addPoints` calculates incorrectly. When adding a `purchaseAmount` it reduces the user's balance.
 
 ## Recommendations
 
-Add additional check that the user has no active receivers left.
 Change the code in the following way:
 
 ```diff
-- if (activeTokenIds.contains(_microgridNftId)) {
-+ if (activeTokenIds.contains(_microgridNftId) && activeReceivers[_microgridNftId].length() == 0) {
-    activeTokenIds.remove(_microgridNftId);
+  function addPoints(uint256 microgridId, uint256 purchaseAmount) external {
+    require(allowedCreditors[msg.sender] == true, "Only allowed creditors can add points.");
+-   userBalance[microgridId] -= purchaseAmount;
++   userBalance[microgridId] += purchaseAmount;
   }
 ```
+
+# [H-02] Missing method `receive` in contract.
+
+### Relevant GitHub Links
+	
+https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceExchange.sol
+
+## Severity
+
+**Impact:**
+Medium, as no value will be lost but the contract functionality will be limited
+
+**Likelihood:**
+High, as the function will just revert every time
+
+## Description
+
+The contract `MarketplaceExchange` is missing a method `receive`. This makes it impossible to receive BNB from the contract `MarketplaceInteract`, which violates the functionality of the method `buyPoints`.
+
+## Recommendations
+
+Add  method `receive` to the contract `MarketplaceExchange`.
