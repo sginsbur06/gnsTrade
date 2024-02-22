@@ -1,9 +1,8 @@
-# [M-02] Missing checking that input array lengths are equal to each other
+# [M-02] Wrong use of `transferFrom` ERC721A for transfer to `address(0)`
 
 ### Relevant GitHub Links
 
-https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L920
-https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L64
+https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPosition.sol#L232
 
 ## Severity
 
@@ -11,16 +10,15 @@ https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/
 Medium, as it will not lead to the loss of funds
 
 **Likelihood:**
-Low, as it requires a big error on owner's side
+Medium, as it does not affect the functionality of the entire protocol
 
 ## Description
 
-In contract `MarketplaceInteract`
-  - `setBonusTiers` method does not check if input array lengths are equal to each other.
-
-In contract `MicrogridBatteryManager`
-  - `activateBattery` method does not check if input array lengths are equal to each other.
+The `upgradeBattery` removes ownership of battery and then must `burn` `BatteryNFT`. The issues are that:
+  - contract `MicrogridBatterySplitMyPosition` a inherits from contract `ERC721A`, in which `transferFrom` to the address(0) is prohibited
+  - `usersMicrogridToken Id` is passed as a parameter for burn, but the `MicrogridBatterySplitMyPosition Id` should be passed (in addition, it's necessary to take into account that all `MicrogridBatterySplitMyPosition NFT` belong to the `address(this)`)
+  - in the current implementation the method does not work
 
 ## Recommendations
 
-Add a checks that input array lengths are equal to each other. 
+It is recommended to use the method `_burn` with the correct `NFT Id` as parameter. 
