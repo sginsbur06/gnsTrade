@@ -19,6 +19,3 @@ The `setBonusTiers` method does not check if input array lengths are equal to ea
 ## Recommendations
 
 Add a check that input array lengths are equal to each other.
-## Recommendations
-
-Add  method `receive` to the contract `MarketplaceExchange`.
