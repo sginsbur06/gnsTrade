@@ -1,22 +1,14 @@
-
-# [M-02] Missing missing a method for setting BNB `pointsPerDollar`
+# [I-06] Unused code
 
 ### Relevant GitHub Links
 
-https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol
-
-## Severity
-
-**Impact:**
-High, as this will lead to a monetary loss for users and restrict the functionality of contract
-
-**Likelihood:**
-Medium, it affects user assets only with paying with BNB
+https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L699
+https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L879
 
 ## Description
 
-The `MarketplaceInteract` is missing a method for setting BNB `pointsPerDollar`. This can lead to the loss of user funds when calling the method `buyPoints` and paying with BNB.
+The `AggregatorV3Interface`, `PriceRecord` are never being used in the code. 
 
 ## Recommendations
 
-Add a setter for BNB `pointsPerDollar`.
+It is recommended to remove any unused code or provide valid recommendations and suggestions on the documentation on how to use those.
