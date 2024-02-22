@@ -27,4 +27,4 @@ MarketplaceInteract.sol
 
 ## Recommendations
 
-Consider using safeTransfer()/safeTransferFrom() instead of transfer()/transferFrom().
+Consider using `safeTransfer()/safeTransferFrom()` instead of `transfer()/transferFrom()`.
