@@ -3,7 +3,7 @@
 ### Relevant GitHub Links
 
 https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L920
-https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L59
+https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L64
 
 ## Severity
 
