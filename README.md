@@ -1,4 +1,4 @@
-# [C-02] Wrong calculation for `finalAmount` may lead to loss of user funds
+# [M-02] Oracle price is used without checking validity
 
 ### Relevant GitHub Links
 
@@ -7,59 +7,15 @@ https://github.com/sparkswapdao/emp-fusion-contracts/blob/main/contracts/fusion/
 ## Severity
 
 **Impact:**
-High, as it will result in wrong points calculations and loss of user funds
+Medium, it affects user assets only when the price feed oracle is in bad status
 
 **Likelihood:**
-High, as this will happen any time the user buys points
+Medium, it affects only when the price feed oracle is in bad status
 
 ## Description
 
-The method `buyPoints` uses `bonusPercent`. But calculations are implemented incorrectly, which can lead to loss of user funds (for example, `with bonusPercent == 0`).
+The method `buyPoints` fetches data from Chainlink (or another price feed) with `IAggregator` and `latestAnswer`. To ensure accurate price usage, it's vital to regularly check the last update timestamp against a predefined delay. However, the current implementation lacks checks for the staleness of the price obtained from price feed. Without proper checks, consumers of protocol may continue using outdated, stale, or incorrect data if oracles are unable to submit and start a new round.
 
 ## Recommendations
 
-Change the code in the following way:
-
-```diff
-    // If token is being spent to purchase Marketplace Points.
-   if (token != address(0)) {
-    IERC20(token).transferFrom(msg.sender, address(marketplaceContract), amount);
-    if (token == address(empToken)) {
-      uint256 currentPrice = microgridNFTDeposit.getExchangeRate(token) * 1e18;
-      uint256 purchaseAmount = ((((currentPrice * amount) / 1e18) * allowedCurrencies[token].pointsPerDollar) * 10000) * (calcRateEMP() / 1e18) / 10000;
-      uint256 bonusPercent = getBonusPercent(purchaseAmount);
--     uint256 finalAmount = ((((currentPrice * amount) / 1e18) * allowedCurrencies[token].pointsPerDollar) * 10000) * (calcRateEMP() / 1e18) / 10000 * (bonusPercent * 10000) / 10000;
-+     uint256 finalAmount = ((((currentPrice * amount) / 1e18) * allowedCurrencies[token].pointsPerDollar) * 10000) * (calcRateEMP() / 1e18) / 10000 * (bonusPercent + 10000) / 10000;
-      marketplaceContract.addPoints(usersMicrogridId, finalAmount);
-      emit PointsBought(usersMicrogridId, finalAmount);
-    } else if (allowedCurrencies[token].exRateHelper == true) {
-      uint256 currentPrice = microgridNFTDeposit.getExchangeRate(token) * 1e18;
-      uint256 purchaseAmount = ((currentPrice * amount) / 1e18) * allowedCurrencies[token].pointsPerDollar;
-      uint256 bonusPercent = getBonusPercent(purchaseAmount);
--     uint256 finalAmount = ((currentPrice * amount) / 1e18) * allowedCurrencies[token].pointsPerDollar * (bonusPercent * 10000) / 10000;
-+     uint256 finalAmount = ((currentPrice * amount) / 1e18) * allowedCurrencies[token].pointsPerDollar * (bonusPercent + 10000) / 10000;
-      marketplaceContract.addPoints(usersMicrogridId, finalAmount);
-      emit PointsBought(usersMicrogridId, finalAmount);
-    } else {
-      int256 currentPrice = IAggregator(allowedCurrencies[token].priceAggregator).latestAnswer();
-      uint256 purchaseAmount = (((amount * (uint256(currentPrice) / 10 ** IAggregator(allowedCurrencies[token].priceAggregator).decimals())) / 1e18) * allowedCurrencies[token].pointsPerDollar);
-      uint256 bonusPercent = getBonusPercent(purchaseAmount);
--     uint256 finalAmount = (((amount * (uint256(currentPrice) / 10 ** IAggregator(allowedCurrencies[token].priceAggregator).decimals())) / 1e18) * allowedCurrencies[token].pointsPerDollar) * (bonusPercent *   10000) / 10000;
-+     uint256 finalAmount = ((amount * uint256(currentPrice) / 10 ** IAggregator(allowedCurrencies[token].priceAggregator).decimals()) * allowedCurrencies[token].pointsPerDollar) * (bonusPercent + 10000) / 10000;
-      marketplaceContract.addPoints(usersMicrogridId, finalAmount);
-      emit PointsBought(usersMicrogridId, finalAmount);
-    }
-
-    // Else BNB is being spent.
-    } else {
-      payable(address(marketplaceContract)).transfer(msg.value);
-      int256 currentPrice = IAggregator(aggregatorContract).latestAnswer();
-      uint256 purchaseAmount = (((msg.value * (uint256(currentPrice) / 10 ** IAggregator(aggregatorContract).decimals())) / 1e18) * pointsPerDollar);
-      uint256 bonusPercent = getBonusPercent(purchaseAmount);
--     uint256 finalAmount = (((msg.value * (uint256(currentPrice) / 10 ** IAggregator(aggregatorContract).decimals())) / 1e18) * pointsPerDollar) * (bonusPercent * 10000) / 10000;
-+     uint256 finalAmount = ((msg.value * uint256(currentPrice) / 10 ** IAggregator(aggregatorContract).decimals()) * pointsPerDollar) * (bonusPercent + 10000) / 10000;
-      marketplaceContract.addPoints(usersMicrogridId, finalAmount);
-      emit PointsBought(usersMicrogridId, finalAmount);
-    }
-    
-``` 
+Implement a mechanism to check the heartbeat of the price feed and compare it against a predefined maximum delay (`MAX_DELAY`). Adjust the `MAX_DELAY` variable based on the observed heartbeat.  It is recommended to implement checks to ensure that the price returned by price feed is not stale. 
