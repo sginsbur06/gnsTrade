@@ -1,33 +1,22 @@
+# [M-02] Missing Min Max validation for `sacMultiplier`
+
 ### Relevant GitHub Links
 
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1072
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1093
 
 ## Severity
 
 **Impact:**
-Low, as it will not lead to the loss of funds or restriction on the functionality of protocol
+High, as this will lead to a monetary loss for users
 
 **Likelihood:**
-Low, as it occurs only in this method
+Low, as it requires a big error on owner's side
 
 ## Description
 
-The method `setAllowedCurrency` is implemented so that it missed the setting of  `allowedCurrencies[_token].token`.
+The method `setSacrificeContract` is implemented so that there are no any restrictions on the minimum and maximum values of the parameter `sacMultiplier`. This parameter is used in calculating the size of the user’s deposit in method `deposit` (in particular, `sacMultiplier == 0` will result in the complete loss of the user's funds).
 
 ## Recommendations
 
-Change the code in the following way:
-
-```diff
-  function setAllowedCurrency(
-    address _token,
-    address _lpToken,
-    uint256 _sharesPerEMP,
-    bool _allowed
-  ) public onlyOwner {
-+   allowedCurrencies[_token].token = _token;
-    allowedCurrencies[_token].lpToken = _lpToken; // The Cake-LP token for the primary trading pair for this token.
-    allowedCurrencies[_token].sharesPerEMP = _sharesPerEMP; // Amount of microgrid shares allocated per $1 deposited.
-    allowedCurrencies[_token].allowed = _allowed; // Only allowed = true tokens are able to be deposited.
-  }
-``` 
+It is recommended to add storage variables defining Min and Max values of `sacMultiplier`.
+Add a suitable check to the method `setSacrificeContract`.
