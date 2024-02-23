@@ -1,22 +1,33 @@
-# [H-02] Exchange Rate can be manipulated
+# [H-02] Using `tx.origin` creates an opportunity for phishing attack
 
 ### Relevant GitHub Links
 
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1202
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1314-L1321
 
 ## Severity
 
 **Impact:**
-High, as this will lead to a monetary loss for protocol
+High, as this will lead to a monetary loss for user
 
 **Likelihood:**
-Medium, as it happens only in case of using the method as the main price feed
+Medium, as the attack is not easy to execute
 
 ## Description
 
-A malicious user can manipulate the protocol to get more shares from the `MicrogridNFTDeposit` than they should. The method `deposit` for calculations uses `getExchangeRate` - in which a possible option is to get the price through `getRateFromDex`. The calculation uses values of `reserve0` and `reserve1` in LP pair (`IPancakePair`) that can be manipulated by flashLoan.
+The method `deposit` is implemented so that `transferFrom` contains `tx.origin` as parameter `from`.
+```solidity
+    if ((DepositType(depositType) == DepositType.BY_EMP_ETH_LP)) {
+      empEthLpToken.transferFrom(tx.origin, address(microgridNFTContract), amount);
+
+    } else if ((DepositType(depositType) == DepositType.DEFAULT)) {
+      empToken.transferFrom(msg.sender, address(microgridNFTContract), amount);
+
+    } else if ((DepositType(depositType) == DepositType.BY_UPEMP)) {
+      upEmp.transferFrom(tx.origin, address(microgridNFTContract), amount);
+    }
+```
+Using `tx.origin` is a dangerous practice as it opens the door to phishing attacks.
 
 ## Recommendations
 
-Add validation for price obtained from `getRateFromDex` using external oracles. 
-
+To prevent `tx.origin` phishing attacks, `msg.sender` should be used instead of `tx.origin`.
