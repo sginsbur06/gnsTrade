@@ -1,53 +1,26 @@
-# [C-06] Mint to an incorrectly specified address makes it impossible to buy a Battery NFT
+# [C-01] It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`
 
 ### Relevant GitHub Links
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1291
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1292
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L221
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionAutoClaimUpkeep.sol#L44
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L251
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L275
 
 ## Severity
 
 **Impact:**
-High, as this will lead to a monetary loss for users
+High, because users will never receive rewards from the contract
 
 **Likelihood:**
-High, as this will happen any time the user call method
+High, as this will happen any time the method is used
 
 ## Description
 
-The method `buyBattery` performs `mint` of `Battery NFT` via external call `batteryContract.mint` and the `address(batteryContract)` is passed as a parameter.
+The `performUpkeep` method should send rewards for each user using `Battery` contract logic. However, this does not work, since in method `claimForMany` on contract `FusionRewardDistributor` the receivers are contracts `BatteryInteractWETH` and `BatteryInteractWBNB`. (The same situation occurs when calling methods `claimFor` or `claimForMany` directly). Since method `run` is not called further on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`, all rewards remain on these contracts and will not distributed further.
 
-On the `Battery` contract `mint` is implemented by the following code:
-```solidity
-  function mint(address user, uint256 amount) external {
-    uint256 usersMicrogridToken = microgridContract.tokenByWallet(user);
-    require(interactContract == msg.sender, "Only the interact contract can mint.");
-    require(ownsBattery[usersMicrogridToken] == false, "You already own this battery.");
-    ownsBattery[usersMicrogridToken] = true;
-    _mint(address(this), amount);
-  }
-```
-Therefore, `msg.sender` must be passed as a parameter. The current implementation results in the loss of user funds, since the `NFT` is not issued to his address.
-
-Functions with this issue:
-  - `WBNBBatteryInteract.buyBattery`
-  - `WETHBatteryInteract.buyBattery`
-  - `BatteryInteractSplitMyPosition.buyBattery`
+This is wrong because it leads to loss of rewards.
 
 ## Recommendations
 
-Change the code in the following way:
-
-```diff 
-    // Purchase battery w/Marketplace Points.        
-      marketplaceContract.spendPoints(usersMicrogridToken, batteryCost);
-
-    // Mint NFT.
--     batteryContract.mint(address(batteryContract), 1);
-+     batteryContract.mint(msg.sender, 1);
-
-     ..........
-```
+Revise method `performUpkeep` to include logic related to further distribution of rewards to users.
+Restrict direct use of methods `claimFor`, `claimForMany`.
