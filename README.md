@@ -1,4 +1,4 @@
-# [C-02] Logic of `deposit` under conditions of `Sacrifice` is not implemented
+# [C-02] Wrong calculation for `amountWithBonus` may lead to loss of user funds
 
 ### Relevant GitHub Links
 
@@ -7,44 +7,58 @@ https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/Mic
 ## Severity
 
 **Impact:**
-High, as this will lead to restriction on the functionality of protocol
+High, as it will result in wrong deposit calculations and loss of user funds
 
 **Likelihood:**
-High, as this will happen any time the user try to deposit with sacrifice
+High, as this will happen any time the user deposit
 
 ## Description
 
-The logic of the protocol assumes that in method `deposit` in cases `DepositType(depositType) == DepositType.BY_SACRIFICE` and `DepositType(depositType) == DepositType.BY_SACRIFICE_USD` a deposit will be carried out without the actual transfer of tokens (or BNB) from users to the contract `MicrogridNFT`.
-The current version of the code does not implement this, and the transaction will revert.
+The method `deposit` in case of `DepositType(depositType) == DepositType.BY_SACRIFICE_USD` uses `currentPrice` of `empToken`. But calculations are implemented incorrectly.
+
+Also, in cases `DepositType(depositType) == DepositType.CURRENCY` or `DepositType(depositType) == DepositType.CURRENCY_BY_TOKEN_ID`, there may be a situation that 
+`getExchangeRate(address(empToken)) > getExchangeRate(address(currency))`. As a result of calculations, `currentPrice == 0`.
+
+This can lead to loss of user funds.
 
 ## Recommendations
 
 Change the code in the following way:
 
 ```diff
+    if (DepositType(depositType) == DepositType.DEFAULT ||
+      DepositType(depositType) == DepositType.BY_TOKEN_ID ||
+      DepositType(depositType) == DepositType.FOR_NEW_USER) {
+      amountWithBonus = (amountWithBonus * 10000) * (calcRateEMP() / 1e18) / 10000;
 
-    if ((DepositType(depositType) == DepositType.BY_EMP_ETH_LP)) {
-      empEthLpToken.transferFrom(tx.origin, address(microgridNFTContract), amount);
+    } else if (DepositType(depositType) == DepositType.BY_SACRIFICE) {
+      amountWithBonus = (amountWithBonus * allowedSacrifices[msg.sender].sacMultiplier) / 10000;
 
-    } else if ((DepositType(depositType) == DepositType.DEFAULT)) {
-      empToken.transferFrom(msg.sender, address(microgridNFTContract), amount);
+    } else if (DepositType(depositType) == DepositType.BY_SACRIFICE_USD) {
+      uint256 currentPrice = (getExchangeRate(address(empToken)));
+-     amountWithBonus = (((amountWithBonus * currentPrice) / 1e18) * allowedSacrifices[msg.sender].sacMultiplier) / 10000;
++     amountWithBonus = (((amountWithBonus / currentPrice) / 1e18) * allowedSacrifices[msg.sender].sacMultiplier) / 10000; 
 
     } else if ((DepositType(depositType) == DepositType.BY_UPEMP)) {
-      upEmp.transferFrom(tx.origin, address(microgridNFTContract), amount);
+      amountWithBonus = (upEmp.calculatePrice() / 1e18) * amountWithBonus;
 
-    } else if ((DepositType(depositType) == DepositType.CURRENCY ||
-      DepositType(depositType) == DepositType.CURRENCY_BY_TOKEN_ID) &&
-      currency != address(0)) {
-      (IERC20(currency)).transferFrom(msg.sender, address(microgridNFTContract), amount);
+    } else if ((DepositType(depositType) == DepositType.BY_EMP_ETH_LP)) {
+      amountWithBonus = ((amountWithBonus * 2 * 1e18 * empToken.balanceOf(address(empEthLpToken)) / empEthLpToken.totalSupply() / 1e18) * 10000) * (calcRateEMP() / 1e18) / 10000;
+            
+    } else if (DepositType(depositType) == DepositType.CURRENCY ||
+      DepositType(depositType) == DepositType.CURRENCY_BY_TOKEN_ID) {
+      int256 currentPrice = 0;
+      uint256 _sharesPerEMP = sharesPerEMP;
 
-+   } else if ((DepositType(depositType) == DepositType.BY_SACRIFICE ||
-+     DepositType(depositType) == DepositType.BY_SACRIFICE_USD)) {
+      if (currency == address(0)) {
+-      currentPrice = (int256(getExchangeRate(currency))) / (int256(getExchangeRate(address(empToken))));
++      currentPrice = (int256(getExchangeRate(currency) * 1e18)) / (int256(getExchangeRate(address(empToken))));
+      } else {
+-      currentPrice = (int256(getExchangeRate(currency))) / (int256(getExchangeRate(address(empToken))));
++      currentPrice = (int256(getExchangeRate(currency) * 1e18)) / (int256(getExchangeRate(address(empToken))));
+        _sharesPerEMP = allowedCurrencies[currency].sharesPerEMP;
+      }
 
-    } else if (msg.value == 0){
-      empToken.transferFrom(msg.sender, address(microgridNFTContract), amount);
-
-    } else {
-      payable(address(microgridNFTContract)).transfer(msg.value);
-    }
-    ...........
-```
+      amountWithBonus= (amountWithBonus * ((uint256(currentPrice)) * _sharesPerEMP) / 1e18) / 1e18;
+    }   
+```  
