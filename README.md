@@ -1,4 +1,4 @@
-# [I-06] Unused `payable` state mutability
+# [C-06] Mint to an incorrectly specified address makes it impossible to buy a Battery NFT
 
 ### Relevant GitHub Links
 
@@ -6,16 +6,46 @@ https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBN
 https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1292
 https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L221
 
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+High, as this will happen any time the user call method
+
 ## Description
 
-The method has a `payable` state mutability, but nowhere in the code implementation is `msg.value` used. (Also, the logic of the method does not imply the use of payment in BNB). This may cause the user's BNB to get stuck in contract.
+The method `buyBattery` performs `mint` of `Battery NFT` via external call `batteryContract.mint` and the `address(batteryContract)` is passed as a parameter.
 
-  Functions with this issue:
+On the `Battery` contract `mint` is implemented by the following code:
+```solidity
+  function mint(address user, uint256 amount) external {
+    uint256 usersMicrogridToken = microgridContract.tokenByWallet(user);
+    require(interactContract == msg.sender, "Only the interact contract can mint.");
+    require(ownsBattery[usersMicrogridToken] == false, "You already own this battery.");
+    ownsBattery[usersMicrogridToken] = true;
+    _mint(address(this), amount);
+  }
+```
+Therefore, `msg.sender` must be passed as a parameter. The current implementation results in the loss of user funds, since the `NFT` is not issued to his address.
+
+Functions with this issue:
   - `WBNBBatteryInteract.buyBattery`
   - `WETHBatteryInteract.buyBattery`
   - `BatteryInteractSplitMyPosition.buyBattery`
 
-
 ## Recommendations
 
-Remove `payable` state mutability. 
+Change the code in the following way:
+
+```diff 
+    // Purchase battery w/Marketplace Points.        
+      marketplaceContract.spendPoints(usersMicrogridToken, batteryCost);
+
+    // Mint NFT.
+-     batteryContract.mint(address(batteryContract), 1);
++     batteryContract.mint(msg.sender, 1);
+
+     ..........
+```
