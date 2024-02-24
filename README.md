@@ -1,36 +1,31 @@
-# [H-02] Missing slippage checks, deadline check is not effective
+# [H-02] Incorrect `path` array length specified
 
 ### Relevant GitHub Links
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1335-L1338
 
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1338
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1374
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1340
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1378
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1373-L1376
 
 ## Severity
 
 **Impact:**
-High, as this will lead to a monetary loss for users
+Medium, as no value will be lost but the contract functionality will be limited
 
 **Likelihood:**
-Medium, as it is not expected to happen every time, but there are multiple attack paths here
+High, as the functions will just revert every time
 
 ## Description
 
-The `run` (and `runFromUpkeep`) make a dangerous assumption about `slippage`, namely that there is not any. 
-The `deadline` check is set to `block.timestamp + 120`, which means the deadline check is disabled.
-
-Users can be frontrun and receive a worse price than expected when they initially submitted the transaction. There's no protection at all, no minimum return amount or deadline for the trade transaction to be valid which means the trade can be delayed by miners or users congesting the network, as well as being sandwich attacked - ultimately leading to loss of user funds.
-
-Functions with these issues:
-  - `WBNBBatteryInteract.run`
-  - `WBNBBatteryInteract.runFromUpkeep`
-  - `WETHBatteryInteract.run`
-  - `WETHBatteryInteract.runFromUpkeep`
+The methods `run` and `runFromUpkeep` have incorrectly specified `path` arrays lengths.
 
 ## Recommendations
 
-Consider adding slippage protection, `amountOutMinimum` can be either set manually or calculated based on external oracles.
+Change the code in the following way:
+
+```diff
+-     address[] memory path = new address[](2);
++     address[] memory path = new address[](3);
+      path[0] = address(eshareToken);
+      path[1] = address(WBNB);
+      path[2] = address(WETH);
+```
