@@ -16,7 +16,7 @@ Medium, as it happens only in case of using the method as the main price feed
 
 ## Description
 
-In method `getExchangeRate` one of the possible options is to get the price through `getRateFromDex`. Implementation of `getExchangeRate` in a protocol assumes that it returns values with 1e18 `decimals`.
+In method `getExchangeRate` one of the possible options is to get the price through `getRateFromDex`. Implementation of `getExchangeRate` in a protocol assumes that it returns values with `decimals == 18`.
 
 `getRateFromDex` to calculate `tokenPrice` uses values of `reserve0` and `reserve1` in LP pair (`IPancakePair`).
 However, tokens in a pair may have different `decimals` values (and therefore - `reserve0`, `reserve1`). In this case, the calculation for `getExchangeRate` will be performed incorrectly.
