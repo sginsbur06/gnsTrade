@@ -1,28 +1,82 @@
-# [H-02] `getExchangeRate` not take into account the possibility of `tokens` in `Pair` with different `decimals`
+
+
+# [C-02] Calculation in `addPoints` reduces the user's balance
 
 ### Relevant GitHub Links
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1202
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L906
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol
 
 ## Severity
 
 **Impact:**
-High, as this will lead to a monetary loss for protocol
+High, as this will lead to a monetary loss for users
 
 **Likelihood:**
-Medium, as it happens only in case of using the method as the main price feed
+High, as this will happen any time the user buys points
 
 ## Description
 
-In method `getExchangeRate` one of the possible options is to get the price through `getRateFromDex`. Implementation of `getExchangeRate` in a protocol assumes that it returns values with `decimals == 18`.
+The `DistributePoints` value for each `user's receiver` is saved to mapping `last_distPoints`. These values are updated on the contract `FusionRewardDistributor`
+```solidity
+      last_distPoints[_id][_receiver] = totalDistributePoints;
+```
+This happens at:
+  - adding a new `Battery receiver` (`_setReceiver`)
+  - calling the method `compoundFor`
+```solidity
+  function compoundFor(uint256 _id, bool _claimBefore) public whenNotPaused {
+    if (last_distPoints[_id][address(this)] == 0) {
+      last_distPoints[_id][address(this)] = totalDistributePoints;
+    }
+    if (_claimBefore) {
+      _tryClaimFarm();
+    }
 
-`getRateFromDex` to calculate `tokenPrice` uses values of `reserve0` and `reserve1` in LP pair (`IPancakePair`).
-However, tokens in a pair may have different `decimals` values (and therefore - `reserve0`, `reserve1`). In this case, the calculation for `getExchangeRate` will be performed incorrectly.
+    if (totalReceiversAllocPoints[_id] == 0) {
+      uint256 distributed = _getDistributionRewards(_id, address(this));
 
-A similar method `getRateFromDex` is also implemented in the contract `ExchangeRateHelper`.
+      if (distributed > 0) {
+        last_distPoints[_id][address(this)] = totalDistributePoints;
+        esharePending = esharePending.sub(distributed);
+        eshareCompounded = eshareCompounded.add(distributed);
 
-## Recommendations
+        nft.compoundForTokenId(distributed, _id);
 
-Add logic that takes into account the possibility of tokens with different `decimals` being in a pair.
+        _tryClaimFarm();
+
+        if (last_distPoints[_id][address(this)] != totalDistributePoints) last_distPoints[_id][address(this)] = totalDistributePoints;
+
+        emit Compound(_id, distributed);
+      }
+    }
+  }
+```
+Moreover, the update occurs only in the case of `totalReceiversAllocPoints == 0` (if the user does not have a `Battery receiver`)
+  - calling the method `claimFor`
+```solidity
+  function claimFor(uint256 _id, address _receiver, bool _saveGas) public whenNotPaused {
+    if (receiversAllocPoints[_id][_receiver] > 0) {
+      if (last_distPoints[_id][_receiver] == 0) {
+        last_distPoints[_id][_receiver] = totalDistributePoints;
+      }
+      if (!_saveGas) {
+        _tryClaimFarm();
+      }
+
+      uint256 rewards = _getDistributionRewards(_id, _receiver);
+
+      if (rewards > 0) {
+        esharePending = esharePending.sub(rewards);
+        last_distPoints[_id][_receiver] = totalDistributePoints;
+
+        eshare.safeTransfer(_receiver, rewards);
+
+        if (!_saveGas) {
+        emit Claim(_id, rewards);
+        }
+      }
+    }
+  }
+```
+This creates the following attack vectors:
+
