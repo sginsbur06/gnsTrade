@@ -1,20 +1,20 @@
 - ## Critical Risk Findings
-    - [C-01. It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#C-01)
-    - [C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards](#C-02)
-    - [C-03. User's rewards to be lost until the method `compoundFor` is called for the first time](#C-03)
-    - [C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#C-04)
-    - [C-05. Calculation in `addPoints` reduces the user's balance](#C-05)
-    - [C-06. Calculation for `finalAmount` will result in wrong decimals](#C-06)
-    - [C-07. Wrong calculation for `finalAmount` may lead to loss of user funds](#C-07)
-    - [C-08. Logic of `deposit` under conditions of `Sacrifice` is not implemented](#C-08)
-    - [C-09. Wrong calculation for `amountWithBonus` may lead to loss of user funds](#C-09)
-    - [C-10. Mint to an incorrectly specified address makes it impossible to buy a Battery NFT](#C-10)
-    - [C-11. Accounting and updating `last_distPoints` allow malicious users to receive additional rewards](#C-11)
-    - [C-12. Calculation for `ExchangeRate` will result in wrong decimals](#C-12)
-    - [C-13. It's impossible for a user to claim his rewards, as `run` and `runFromUpkeep` will not pass `currentMinClaim` check](#C-13)
-    - [C-14. Wrong calculation in `buyOrder` increases the `refundAmount`](#C-14)
-    - [C-15. Missing a method for setting `MarketplaceContract`](#C-15)
- 
+    - [C-01. It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#c-01-its-impossible-for-a-user-to-claim-his-rewards-as-performupkeep-claimfor-claimformany-leaves-rewards-on-contracts-batteryinteractweth-and-batteryinteractwbnb)
+    - [C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards](#c-02-wrong-receivers-implementation-in-claimfor-will-result-in-loss-of-rewards)
+    - [C-03. User's rewards to be lost until the method `compoundFor` is called for the first time](#c-03-users-rewards-to-be-lost-until-the-method-compoundfor-is-called-for-the-first-time)
+    - [C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#c-04-user-can-manipulate-with-adding-and-removing-receivers-which-will-lead-to-incorrect-calculation-of-rewards)
+    - [C-05. Calculation in `addPoints` reduces the user's balance](#c-05-calculation-in-addpoints-reduces-the-users-balance)
+    - [C-06. Calculation for `finalAmount` will result in wrong decimals](#c-06-calculation-for-finalamount-will-result-in-wrong-decimals)
+    - [C-07. Wrong calculation for `finalAmount` may lead to loss of user funds](#c-07-wrong-calculation-for-finalamount-may-lead-to-loss-of-user-funds)
+    - [C-08. Logic of `deposit` under conditions of `Sacrifice` is not implemented](#c-08-logic-of-deposit-under-conditions-of-sacrifice-is-not-implemented)
+    - [C-09. Wrong calculation for `amountWithBonus` may lead to loss of user funds](#c-09-wrong-calculation-for-amountwithbonus-may-lead-to-loss-of-user-funds)
+    - [C-10. Mint to an incorrectly specified address makes it impossible to buy a Battery NFT](#c-10-mint-to-an-incorrectly-specified-address-makes-it-impossible-to-buy-a-battery-nft)
+    - [C-11. Accounting and updating `last_distPoints` allow malicious users to receive additional rewards](#c-11-accounting-and-updating-last_distpoints-allow-malicious-users-to-receive-additional-rewards)
+    - [C-12. Calculation for `ExchangeRate` will result in wrong decimals](#c-12-calculation-for-exchangerate-will-result-in-wrong-decimals)
+    - [C-13. It's impossible for a user to claim his rewards, as `run` and `runFromUpkeep` will not pass `currentMinClaim` check](#c-13-its-impossible-for-a-user-to-claim-his-rewards-as-run-and-runfromupkeep-will-not-pass-currentminclaim-check)
+    - [C-14. Wrong calculation in `buyOrder` increases the `refundAmount`](#c-14-wrong-calculation-in-buyorder-increases-the-refundamount)
+    - [C-15. Missing a method for setting `MarketplaceContract`](#c-15-missing-a-method-for-setting-marketplacecontract)
+
 
 
 
