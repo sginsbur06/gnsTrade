@@ -12,7 +12,7 @@ A smart contract applicatoin for storing a password. Users should be able to sto
 
 - [PasswordStore](#passwordstore)
 - [Getting Started](#getting-started)
-  - [Requirements](#requi)
+  - [Requirements](#requirements)
   - [Quickstart](#quickstart)
 - [Usage](#usage)
   - [Deploy (local)](#deploy-local)
