@@ -45,7 +45,7 @@ Restrict direct use of methods `claimFor`, `claimForMany`.
 
 
 
-## <a id='C-02'></a>C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards 
+## <a name='C-02'></a>C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards 
 
 ### Relevant GitHub Links
 
