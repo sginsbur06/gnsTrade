@@ -53,9 +53,6 @@ Restrict direct use of methods `claimFor`, `claimForMany`.
 
 
 
-
-
-
 ## <a id='C-02'></a>C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards 
 
 ### Relevant GitHub Links
@@ -242,7 +239,6 @@ For contract `MicrogridBatteryManager` change the code in the following way:
 +   function setReceivers(uint256 _microgridNftId, uint256[] calldata _allocPoints, address[] calldata _receivers, address[] calldata _receiverInteractContracts) external;
   }
 ```
-
 
 
 
