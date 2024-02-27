@@ -1,63 +1,124 @@
-# [C-02] Accounting and updating `last_distPoints` allow malicious users to receive additional rewards
+# Detailed Findings
+
+# [C-01] It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`
 
 ### Relevant GitHub Links
 	
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionAutoClaimUpkeep.sol#L44
 
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L251
 
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol
-
-https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L275
 
 ## Severity
 
 **Impact:**
-High, as this will lead to a monetary loss for users
+High, because users will never receive rewards from the contract
 
 **Likelihood:**
-High, since multiple attack vectors are possible
+High, as this will happen any time the method is used
 
 ## Description
 
-The `DistributePoints` value for each `user's receiver` is saved to mapping `last_distPoints`. These values are updated on the contract `FusionRewardDistributor`
+The `performUpkeep` method should send rewards for each user using `Battery` contract logic. However, this does not work, since in method `claimForMany` on contract `FusionRewardDistributor` the receivers are contracts `BatteryInteractWETH` and `BatteryInteractWBNB`. (The same situation occurs when calling methods `claimFor` or `claimForMany` directly). Since method `run` is not called further on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`, all rewards remain on these contracts and will not distributed further.
+
+This is wrong because it leads to loss of rewards.
+
+## Recommendations
+
+Revise method `performUpkeep` to include logic related to further distribution of rewards to users.
+Restrict direct use of methods `claimFor`, `claimForMany`. 
+
+
+# [C-02] Wrong receiver's implementation in `claimFor` will result in loss of rewards 
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L251
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L95
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L123
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L428
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L64
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L12
+
+## Severity
+
+**Impact:**
+High, as this will result in 0 rewards for users when they try to use methods `claimFor` or `claimForMany` 
+
+**Likelihood:**
+High, as this will happen any time the methods are used
+
+## Description
+
+The `claimFor` method sends user's rewards to the address of `_receiver` (the receivers are the `MicrogridBatteryWBNB` or `MicrogridBatteryWETH` contracts)
+
 ```solidity
-      last_distPoints[_id][_receiver] = totalDistributePoints;
+eshare.safeTransfer(_receiver, rewards);
 ```
-This happens at:
-  - adding a new `Battery receiver` (`_setReceiver`)
-  - calling the method `compoundFor`
-```solidity
-  function compoundFor(uint256 _id, bool _claimBefore) public whenNotPaused {
-    if (last_distPoints[_id][address(this)] == 0) {
-      last_distPoints[_id][address(this)] = totalDistributePoints;
+However, for further sending to users, rewards must be sent to the corresponding contracts `BatteryInteractWBNB` and `BatteryInteractWETH` (which have the appropriate logic for this). 
+The issue is that in the current edition, all rewards remain on the `MicrogridBatteryWBNB` or `MicrogridBatteryWETH` contracts and will not distributed further.
+
+## Recommendations
+
+Add the mapping for pairs `MicrogridBattery` - `BatteryInteract` and AddressSet `_listOfReceiversInteractContracts` in contract `FusionRewardDistributor`
+
+```diff
++ mapping(address => address) public receiversInteractContracts;
++ EnumerableSet.AddressSet private _listOfReceiversInteractContracts;
+```
+
+Change the code in the following way:
+
+```diff
+- function _setReceiver(uint256 _microgridNftId, uint256 _allocPoints, address _receiver) internal {
++ function _setReceiver(uint256 _microgridNftId, uint256 _allocPoints, address _receiver, address _receiverInteractContracts ) internal {
+    require(verifiedReceivers[_receiver], "Caller is not verified receiver");
+
+    totalReceiversAllocPoints[_microgridNftId] = totalReceiversAllocPoints[_microgridNftId].sub(receiversAllocPoints[_microgridNftId][_receiver]).add(
+      _allocPoints
+    );
+    receiversAllocPoints[_microgridNftId][_receiver] = _allocPoints;
++   receiversInteractContracts[_receiver] = _receiverInteractContracts;
++   if (!_listOfReceiversInteractContracts.contains(_receiverInteractContracts)) _listOfReceiversInteractContracts.add(_receiverInteractContracts);
+    if (last_distPoints[_microgridNftId][_receiver] == 0) {
+      last_distPoints[_microgridNftId][_receiver] = totalDistributePoints;
     }
-    if (_claimBefore) {
-      _tryClaimFarm();
-    }
 
-    if (totalReceiversAllocPoints[_id] == 0) {
-      uint256 distributed = _getDistributionRewards(_id, address(this));
-
-      if (distributed > 0) {
-        last_distPoints[_id][address(this)] = totalDistributePoints;
-        esharePending = esharePending.sub(distributed);
-        eshareCompounded = eshareCompounded.add(distributed);
-
-        nft.compoundForTokenId(distributed, _id);
-
-        _tryClaimFarm();
-
-        if (last_distPoints[_id][address(this)] != totalDistributePoints) last_distPoints[_id][address(this)] = totalDistributePoints;
-
-        emit Compound(_id, distributed);
+    if (_allocPoints > 0) {
+      if (!activeReceivers[_microgridNftId].contains(_receiver)) {
+        activeReceivers[_microgridNftId].add(_receiver);
+      }
+      if (!activeTokenIds.contains(_microgridNftId)) {
+        activeTokenIds.add(_microgridNftId);
+      }
+    } else {
+      if (activeReceivers[_microgridNftId].contains(_receiver)) {
+        activeReceivers[_microgridNftId].remove(_receiver);
+      }
+      if (activeTokenIds.contains(_microgridNftId)) {
+        activeTokenIds.remove(_microgridNftId);
       }
     }
   }
+
+
+- function setReceivers(uint256 _microgridNftId, uint256[] calldata _allocPoints, address[] calldata _receivers) public {
++ function setReceivers(uint256 _microgridNftId, uint256[] calldata _allocPoints, address[] calldata _receivers, address[] calldata _receiverInteractContracts) public {
+    require(msg.sender == batteryManagerContract, "Caller must be the battery manager contract.");
+    for (uint256 i = 0; i < _receivers.length; i++) {
+-     _setReceiver(_microgridNftId, _allocPoints[i], _receivers[i]);
++     _setReceiver(_microgridNftId, _allocPoints[i], _receivers[i], _receiverInteractContracts[i]);
+    }
+  }
 ```
-Moreover, the update occurs only in the case of `totalReceiversAllocPoints == 0` (if user does not have a `Battery receiver`)
-  - calling the method `claimFor`
-```solidity
+
+```diff
   function claimFor(uint256 _id, address _receiver, bool _saveGas) public whenNotPaused {
     if (receiversAllocPoints[_id][_receiver] > 0) {
       if (last_distPoints[_id][_receiver] == 0) {
@@ -73,213 +134,195 @@ Moreover, the update occurs only in the case of `totalReceiversAllocPoints == 0`
         esharePending = esharePending.sub(rewards);
         last_distPoints[_id][_receiver] = totalDistributePoints;
 
-        eshare.safeTransfer(_receiver, rewards);
+-       eshare.safeTransfer(_receiver, rewards);
++       eshare.safeTransfer(receiversInteractContracts[_receiver], rewards);
 
         if (!_saveGas) {
-        emit Claim(_id, rewards);
+          emit Claim(_id, rewards);
         }
       }
     }
   }
 ```
-This creates the following attack vectors:
 
-**1. Via Deposit**
+```diff
+  function listClaimableReceivers(uint256 _startIndex, uint256 _endIndex) external view returns (uint256[] memory, address[][] memory) {
+    // Ensure _endIndex is within the bounds of the active token IDs array
+    _endIndex = Math.min(_endIndex + 1, activeTokenIds.length());
 
-    The malicious user has
+    // Initialize temporary arrays to hold token IDs and receivers
+    uint256[] memory tokenIds = new uint256[](_endIndex - _startIndex);
+    address[][] memory temp = new address[][](_endIndex - _startIndex);
 
-      MicrogridNFT id = 1
+    uint256 counter = 0; // A counter to keep track of how many eligible receivers we've found
 
-      individualShares = 100
+    // Loop over the specified range of token IDs
+    for (uint256 i = _startIndex; i < _endIndex; i++) {
+      uint256 _tokenId = activeTokenIds.at(i);
+      uint256 _numReceivers = activeReceivers[_tokenId].length();
 
-      MicrogridBatteryWBNB - receiver
+      // Initialize an array to hold the eligible receivers for the current token ID
+      address[] memory eligibleReceivers = new address[](_numReceivers);
+      uint256 eligibleCount = 0;
 
-      receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000
+      // Loop over all receivers for the current token ID
+      for (uint256 j = 0; j < _numReceivers; j++) {
+        address _receiver = activeReceivers[_tokenId].at(j);
 
-      totalReceiversAllocPoints for user’s = 1000
+        // If the receiver can claim rewards, add them to the eligibleReceivers array
+-       if (getTotalRewards(_tokenId, _receiver) >= IBattery(_receiver).minClaimAmount()) {
++       if (getTotalRewards(_tokenId, _receiver) >= IBattery(receiversInteractContracts[_receiver]).minClaimAmount()) {
+          eligibleReceivers[eligibleCount++] = _receiver;
+        }
+      }
 
-      last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000
+        ........................
+``` 
 
-At the same time, on the contract `totalDistributePoints = 50000`.
+For contract `MicrogridBatteryManager` change the code in the following way:
 
-The malicious user adds another `200 shares` via `deposit` on the `MicrogridNFTDeposit` contract (`addSharesByDeposit` on `MicrogridNFT`)
-```solidity
-  function addSharesByDeposit(uint256 amount, uint256 tokenId) external onlyDepositContract {
-    require(_exists(tokenId), "Token does not exist");
-
-    individualShares[tokenId] += amount;
-    totalShares += amount;
-    _updateRewardsAndPoints(tokenId);
-  }
-```
-After adding, the method `updateRewardsAndPonts` is called on `FusionRewardDistributor`
-```solidity
-  function updateRewardsAndPoints(uint256 _id) external {
-    require(_msgSender() == address(nft), "Caller is not MicroGridNFT");
-    _tryClaimFarm();
-    compoundFor(_id, false);
-  }
-```
-This is where `rewards` are received from `Farm` (`_tryClaimFarm`) and `compoundFor` is called.
-
-New value on the contract is `totalDistributePoints = 80000`.
-
-However, the `compound` for malicious user does not occur (since `totalReceiversAllocPoints != 0`) and there is no update to the `last_distPoints` value either.
-
-    New values
-
-      individualShares = 300
-
-      MicrogridBatteryWBNB - receiver
-
-      receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000
-
-      totalReceiversAllocPoints for user’s = 1000
-
-      last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000
-
-Next, malicious user calls `claimFor`, where the `rewards` for `receiver` are calculated using `_getDistributionRewards` as follows
-```solidity
-  function _getDistributionRewards(uint256 _id, address _receiver) internal view returns (uint256) {
-    uint256 _points = last_distPoints[_id][_receiver];
-    if (_points == 0) return 0;
-
-    uint256 _distributionRewards = nft.individualShares(_id).mul(totalDistributePoints.sub(_points)).div(MULTIPLIER);
-    uint256 _receiverAllocPoints = receiversAllocPoints[_id][_receiver];
-    uint256 _totalReceiversAllocPoints = totalReceiversAllocPoints[_id];
-
-    if (_totalReceiversAllocPoints == 0 && _receiver == address(this)) return _distributionRewards;
-
-    return
-      verifiedReceivers[_receiver] && _receiverAllocPoints > 0 && _totalReceiversAllocPoints > 0
-        ? _distributionRewards.mul(_receiverAllocPoints).div(_totalReceiversAllocPoints)
-        : 0;
-  }
-```
-Here you can see that malicious user will receive `rewards` based on the new `individualShares` value - 3 times more than they should have.
-
-In one option, the `attacker` can monitor the mempool in order to make a frontrun transaction that outputs rewards from `Farm` to `FusionRewardDistributor` (while sharply increasing the value of its `individualShares`).
-
-An additional problem for the protocol would be that if, due to this situation, it turns out that `eSharePending < distributed`
-```solidity
-      esharePending = esharePending.sub(distributed);
-```
-
-
-**2. Via Split**
-
-    Let's assume there are 2 attackers with same balances
-
-      MicrogridNFT id
-
-      individualShares = 100
-
-      MicrogridBatteryWBNB - receiver
-
-      receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000
-
-      totalReceiversAllocPoints for user’s = 1000
-
-      last_distPoints[id][address(MicrogridBatteryWBNB)] = 50000
-
-      MicrogridBatterySplitMyPosition
-
-At the same time, on the contract `totalDistributePoints = 50000`.
-
-Attacker1 puts 100 of his `individualShares` up for sale using the split method on `BatteryInteractSplitMyPosition`
-
-```solidity
-  function split(uint256 sharesAmount, uint256 pricePerShare) public nonReentrant {
-    // Find user's microgrid token ID.
+```diff
+- function activateBattery(uint256[] calldata _allocPoints, address[] calldata _microgridBatteryNFTContracts) public {
++ function activateBattery(uint256[] calldata _allocPoints, address[] calldata _microgridBatteryNFTContracts, address[] calldata _interactBatteryContracts) public {
+    // Find user's Microgrid token ID and battery token ID.
     uint256 usersMicrogridToken = microgridContract.tokenByWallet(msg.sender);
-
-    // Requires
     require(usersMicrogridToken > 0, "You must own a Microgrid NFT.");
-    require(sharesAmount <= microgridContract.individualShares(usersMicrogridToken), "You cannot split more shares than you own.");
 
-    // Remove the sharesAmount from user's individualShares temporarily.
-    uint256 currentShares = microgridContract.individualShares(usersMicrogridToken);
-    uint256 newShares = currentShares - sharesAmount;
-    microgridContract.setShares(newShares, usersMicrogridToken);
+    BatteryInfo storage batteryInfo = batteryInfoByTokenId[usersMicrogridToken];
 
-    // Add the sharesAmount temporarily to the Treasury wallet.
-    uint256 treasuryMicrogridToken = microgridContract.tokenByWallet(treasury);
-    uint256 treasuryCurrentShares = microgridContract.individualShares(treasuryMicrogridToken);
-    uint256 treasuryNewShares = treasuryCurrentShares + sharesAmount;
-    microgridContract.setShares(treasuryNewShares, treasuryMicrogridToken);
+-  fusionDistributorContract.setReceivers(usersMicrogridToken, _allocPoints, _microgridBatteryNFTContracts);
++  fusionDistributorContract.setReceivers(usersMicrogridToken, _allocPoints, _microgridBatteryNFTContracts, _interactBatteryContracts);
 
-    // Add the shares and pricePerShare to the salesList mapping.
-    ..........................
+    for (uint256 i = 0; i < _microgridBatteryNFTContracts.length; i++) {
+      bool ownsBattery = (IMicrogridBatteryNFT(_microgridBatteryNFTContracts[i])).checkBattery(usersMicrogridToken);
+
+        for (uint256 i = 0; i < _microgridBatteryNFTContracts.length; i++) {
+            bool ownsBattery = (IMicrogridBatteryNFT(_microgridBatteryNFTContracts[i])).checkBattery(usersMicrogridToken);
+      require(ownsBattery == true, "Your Microgrid does not own this battery.");
+
+      if (batteryInfo.ownsBatteries[_microgridBatteryNFTContracts[i]] == false) {
+          batteryInfo.ownedBatteries.push(_microgridBatteryNFTContracts[i]);
+          batteryInfo.ownsBatteries[_microgridBatteryNFTContracts[i]] == true;
+      }
+      batteryInfo.batteryPercents[_microgridBatteryNFTContracts[i]] = _allocPoints[i];
+
+      emit ActivateBattery(usersMicrogridToken, _allocPoints[i] > 0);
     }
-```
-Here new `individualShares` values (0 for Attacker1, 100 for Treasury) are written via the method `setShares` on `MicrogridNFT`
-```solidity
-  function setShares(uint256 amount, uint256 tokenId) external nonReentrant {
-    require(_exists(tokenId), "Token does not exist");
-    require(
-      allowedBatteries[msg.sender],
-      "Only batteries can set a tokenId's shares."
-    );
-
-    uint256 previousShares = individualShares[tokenId];
-
-    individualShares[tokenId] = amount;
-    totalShares -= previousShares;
-    totalShares += amount;
-    _updateRewardsAndPoints(tokenId);
+  }
+``` 
+```diff
+  interface IFusionRewardDistributor {
+-   function setReceivers(uint256 _microgridNftId, uint256[] calldata _allocPoints, address[] calldata _receivers) external;
++   function setReceivers(uint256 _microgridNftId, uint256[] calldata _allocPoints, address[] calldata _receivers, address[] calldata _receiverInteractContracts) external;
   }
 ```
-After adding, the `updateRewardsAndPonts` method is called.
 
-New value on the contract `totalDistributePoints = 80000`.
 
-However, the `compound` for the user does not occur (since `totalReceiversAllocPoints != 0`) and there is no update to the `last_distPoints` value either.
 
-After this, Attacker2, through the `buyOrder` method on `BatteryInteractSplitMyPosition`, acquires 100 `individualShares` (now he has 200).
+# [M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionAutoClaimUpkeep.sol#L32
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L428
+
+## Severity
+
+**Impact:**
+Medium, as this will lead to a incomplete use of protocol capabilities
+
+**Likelihood:**
+Medium, as it happens only for using of AutoClaim
+
+## Description
+
+Method `checkUpkeep` generates a list of receivers using an external call to method `listClaimableReceivers` on contract `FusionRewardDistributor`. Since this happens before receiving rewards on `FusionRewardDistributor` through `_tryClaimFarm`, the method `getTotalRewards` gives a result of 0, and the receiver will not be included in the `eligibleReceivers` list (according to the following code):
+
 ```solidity
-  function buyOrder(uint256 orderId, uint256 sharesAmount) public payable nonReentrant {
-    // Find microgrid token ID and current Shares.
-    uint256 usersMicrogridToken = microgridContract.tokenByWallet(msg.sender);
-    uint256 treasuryMicrogridToken = microgridContract.tokenByWallet(treasury);
-    uint256 buyerCurrentShares = microgridContract.individualShares(usersMicrogridToken);
-    uint256 treasuryCurrentShares = microgridContract.individualShares(treasuryMicrogridToken);
-
-    .............................
-
-    // Transfer shares.
-    uint256 buyerNewShares = buyerCurrentShares + sharesAmount;
-    microgridContract.setShares(buyerNewShares, usersMicrogridToken);
-
-    uint256 treasuryNewShares = treasuryCurrentShares - sharesAmount;
-    microgridContract.setShares(treasuryNewShares, treasuryMicrogridToken);
-
-    // Emit event.
-    emit SharesBought(orderId, sharesAmount, feeAmount + sellerAmount);
-  }
+if (getTotalRewards(_tokenId, _receiver) >= IBattery(_receiver).minClaimAmount()) {
+  eligibleReceivers[eligibleCount++] = _receiver;
+}
 ```
-Next, Attacker2 calls `claimFor`, receiving extra rewards.
-
-The next step is to do this procedure in reverse order.
-
-As a result, Attacker1 has 
-
-    individualShares = 200
-    
-    last_distPoints[id][address(MicrogridBatteryWBNB)] = 50000 (as in the beginning)
-
-After which Attacker1 also receives extra rewards.
-
-We would also like to point out that with each `split` the `compound` is executed for Treasury (`totalReceiversAllocPoints == 0`), which leads to loss of user rewards.
+Therefore `checkUpkeep` will generate always an empty list and method `performUpkeep` a will not work.
 
 ## Recommendations
 
-We recommend 
+Remove check in the method `listClaimableReceivers`.
+Change the code in the following way:
 
-  - changing the logic for accounting and updating `last_distPoints`
+```diff
+  function listClaimableReceivers(uint256 _startIndex, uint256 _endIndex) external view returns (uint256[] memory, address[][] memory) {
+    // Ensure _endIndex is within the bounds of the active token IDs array
+    _endIndex = Math.min(_endIndex + 1, activeTokenIds.length());
 
-  - add check that `eSharePending >= distributed`
+    // Initialize temporary arrays to hold token IDs and receivers
+    uint256[] memory tokenIds = new uint256[](_endIndex - _startIndex);
+    address[][] memory temp = new address[][](_endIndex - _startIndex);
 
-  - reviewing logic with compound for Treasury
+    uint256 counter = 0; // A counter to keep track of how many eligible receivers we've found
+
+    // Loop over the specified range of token IDs
+    for (uint256 i = _startIndex; i < _endIndex; i++) {
+      uint256 _tokenId = activeTokenIds.at(i);
+      uint256 _numReceivers = activeReceivers[_tokenId].length();
+
+      // Initialize an array to hold the eligible receivers for the current token ID
+      address[] memory eligibleReceivers = new address[](_numReceivers);
+      uint256 eligibleCount = 0;
+
+      // Loop over all receivers for the current token ID
+      for (uint256 j = 0; j < _numReceivers; j++) {
+        address _receiver = activeReceivers[_tokenId].at(j);
+
+-       // If the receiver can claim rewards, add them to the eligibleReceivers array
+-       if (getTotalRewards(_tokenId, _receiver) >= IBattery(_receiver).minClaimAmount()) {
+          eligibleReceivers[eligibleCount++] = _receiver;
+-       }
+      }
+
+        ........................
+``` 
 
 
+# [С-02] User's rewards to be lost until the method `compoundFor` is called for the first time
+
+### Relevant GitHub Links
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L216
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L243
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L212
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+High, as this will happen with each user
+
+## Description
+
+Each new user has `last_distPoints == 0`. When the method `compoundFor` (or `compoundForMany`, `compound`) is called for the first time, the `last_distPoints` is initialized (and in fact, only from this moment does the counting of rewards for a given user start). In according with this code:
+
+```solidity
+  function compoundFor(uint256 _id, bool _claimBefore) public whenNotPaused {
+    if (last_distPoints[_id][address(this)] == 0) {
+      last_distPoints[_id][address(this)] = totalDistributePoints;
+    }
+    if (_claimBefore) {
+      _tryClaimFarm();
+    }
+    .........
+```
+This causes the user's rewards to be lost until the methods are called for the first time.
+
+## Recommendations
+
+It is necessary to revise the logic so that when a user is added into protocol, method `_tryClaimFarm` is executed and `last_distPoints` in `FusionRewardDistributor` is initialized
+```solidity
+  last_distPoints[_id][address(this)] = totalDistributePoints;
+```
 
