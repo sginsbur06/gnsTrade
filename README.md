@@ -115,9 +115,19 @@ New value on the contract is `totalDistributePoints = 80000`.
 
 However, the `compound` for the user does not occur (since `totalReceiversAllocPoints != 0`) and there is no update to the `last_distPoints` value either.
 
-    New values
+   
     
+  The user ha
       - `individualShares = 300`
+      - `MicrogridBatteryWBNB - receiver`
+      - `receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000`
+      - `totalReceiversAllocPoints for user’s = 1000`
+      - `last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000`
+
+
+  1.  New values
+      - `MicrogridNFT id = 1`
+      - `individualShares = 100`
       - `MicrogridBatteryWBNB - receiver`
       - `receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000`
       - `totalReceiversAllocPoints for user’s = 1000`
@@ -149,5 +159,4 @@ An additional problem for the protocol would be that if, due to this situation, 
 ```solidity
       esharePending = esharePending.sub(distributed);
 ```
-
 
