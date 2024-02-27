@@ -285,7 +285,7 @@ It is necessary to revise the logic so that when a user is added into protocol, 
 
 
 
-## <a id='C-04'></a>C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards
+## <a id='C-04'></a>C-04. Malicious user can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards
 
 ### Relevant GitHub Links
 	
