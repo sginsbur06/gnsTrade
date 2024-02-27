@@ -1,20 +1,19 @@
 - ## Critical Risk Findings
-    - [C-01. It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#c-01-its-impossible-for-a-user-to-claim-his-rewards-as-performupkeep-claimfor-claimformany-leaves-rewards-on-contracts-batteryinteractweth-and-batteryinteractwbnb)
-    - [C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards](#c-02-wrong-receivers-implementation-in-claimfor-will-result-in-loss-of-rewards)
-    - [C-03. User's rewards to be lost until the method `compoundFor` is called for the first time](#c-03-users-rewards-to-be-lost-until-the-method-compoundfor-is-called-for-the-first-time)
-    - [C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#c-04-malicious-user-can-manipulate-with-adding-and-removing-receivers-which-will-lead-to-incorrect-calculation-of-rewards)
-    - [C-05. Calculation in `addPoints` reduces the user's balance](#c-05-calculation-in-addpoints-reduces-the-users-balance)
-    - [C-06. Calculation for `finalAmount` will result in wrong decimals](#c-06-calculation-for-finalamount-will-result-in-wrong-decimals)
-    - [C-07. Wrong calculation for `finalAmount` may lead to loss of user funds](#c-07-wrong-calculation-for-finalamount-may-lead-to-loss-of-user-funds)
-    - [C-08. Logic of `deposit` under conditions of `Sacrifice` is not implemented](#c-08-logic-of-deposit-under-conditions-of-sacrifice-is-not-implemented)
-    - [C-09. Wrong calculation for `amountWithBonus` may lead to loss of user funds](#c-09-wrong-calculation-for-amountwithbonus-may-lead-to-loss-of-user-funds)
-    - [C-10. Mint to an incorrectly specified address makes it impossible to buy a Battery NFT](#c-10-mint-to-an-incorrectly-specified-address-makes-it-impossible-to-buy-a-battery-nft)
-    - [C-11. Accounting and updating `last_distPoints` allow malicious users to receive additional rewards](#c-11-accounting-and-updating-last_distpoints-allow-malicious-users-to-receive-additional-rewards)
-    - [C-12. Calculation for `ExchangeRate` will result in wrong decimals](#c-12-calculation-for-exchangerate-will-result-in-wrong-decimals)
-    - [C-13. It's impossible for a user to claim his rewards, as `run` and `runFromUpkeep` will not pass `currentMinClaim` check](#c-13-its-impossible-for-a-user-to-claim-his-rewards-as-run-and-runfromupkeep-will-not-pass-currentminclaim-check)
-    - [C-14. Wrong calculation in `buyOrder` increases the `refundAmount`](#c-14-wrong-calculation-in-buyorder-increases-the-refundamount)
-    - [C-15. Missing a method for setting `MarketplaceContract`](#c-15-missing-a-method-for-setting-marketplacecontract)
-
+    - [[C-01] It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#c-01-its-impossible-for-a-user-to-claim-his-rewards-as-performupkeep-claimfor-claimformany-leaves-rewards-on-contracts-batteryinteractweth-and-batteryinteractwbnb)
+    - [[C-02] Wrong receiver's implementation in `claimFor` will result in loss of rewards](#c-02-wrong-receivers-implementation-in-claimfor-will-result-in-loss-of-rewards)
+    - [[C-03] User's rewards to be lost until the method `compoundFor` is called for the first time](#c-03-users-rewards-to-be-lost-until-the-method-compoundfor-is-called-for-the-first-time)
+    - [[C-04] Malicious user can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#c-04-malicious-user-can-manipulate-with-adding-and-removing-receivers-which-will-lead-to-incorrect-calculation-of-rewards)
+    - [[C-05] Calculation in `addPoints` reduces the user's balance](#c-05-calculation-in-addpoints-reduces-the-users-balance)
+    - [[C-06] Calculation for `finalAmount` will result in wrong decimals](#c-06-calculation-for-finalamount-will-result-in-wrong-decimals)
+    - [[C-07] Wrong calculation for `finalAmount` may lead to loss of user funds](#c-07-wrong-calculation-for-finalamount-may-lead-to-loss-of-user-funds)
+    - [[C-08] Logic of `deposit` under conditions of `Sacrifice` is not implemented](#c-08-logic-of-deposit-under-conditions-of-sacrifice-is-not-implemented)
+    - [[C-09] Wrong calculation for `amountWithBonus` may lead to loss of user funds](#c-09-wrong-calculation-for-amountwithbonus-may-lead-to-loss-of-user-funds)
+    - [[C-10] Mint to an incorrectly specified address makes it impossible to buy a Battery NFT](#c-10-mint-to-an-incorrectly-specified-address-makes-it-impossible-to-buy-a-battery-nft)
+    - [[C-11] Accounting and updating `last_distPoints` allow malicious users to receive additional rewards](#c-11-accounting-and-updating-last_distpoints-allow-malicious-users-to-receive-additional-rewards)
+    - [[C-12] Calculation for `ExchangeRate` will result in wrong decimals](#c-12-calculation-for-exchangerate-will-result-in-wrong-decimals)
+    - [[C-13] It's impossible for a user to claim his rewards, as `run` and `runFromUpkeep` will not pass `currentMinClaim` check](#c-13-its-impossible-for-a-user-to-claim-his-rewards-as-run-and-runfromupkeep-will-not-pass-currentminclaim-check)
+    - [[C-14] Wrong calculation in `buyOrder` increases the `refundAmount`](#c-14-wrong-calculation-in-buyorder-increases-the-refundamount)
+    - [[C-15] Missing a method for setting `MarketplaceContract`](#c-15-missing-a-method-for-setting-marketplacecontract)
 
 
 
@@ -22,7 +21,7 @@
 
 # Critical Risk Findings
 
-## <a id='C-01'></a>C-01. It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`
+# [C-01] It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`
 
 ### Relevant GitHub Links
 	
@@ -53,7 +52,7 @@ Restrict direct use of methods `claimFor`, `claimForMany`.
 
 
 
-## <a id='C-02'></a>C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards 
+# [C-02] Wrong receiver's implementation in `claimFor` will result in loss of rewards 
 
 ### Relevant GitHub Links
 
@@ -242,7 +241,7 @@ For contract `MicrogridBatteryManager` change the code in the following way:
 
 
 
-## <a id='C-03'></a>C-03. User's rewards to be lost until the method `compoundFor` is called for the first time
+# [C-03] User's rewards to be lost until the method `compoundFor` is called for the first time
 
 ### Relevant GitHub Links
 	
@@ -285,7 +284,7 @@ It is necessary to revise the logic so that when a user is added into protocol, 
 
 
 
-## <a id='C-04'></a>C-04. Malicious user can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards
+# [C-04] Malicious user can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards
 
 ### Relevant GitHub Links
 	
@@ -308,7 +307,11 @@ The method  `_setReceiver` should initialize the `last_distPoints` when adding a
     last_distPoints[_microgridNftId][_receiver] = totalDistributePoints;
   }
 ```
-But the user can remove their previously initialized receiver and then add it again (in which case the initialization will not occur). This way the user will be able to receive extra rewards for this receiver.
+But the user can remove their previously initialized receiver and then add it again (in which case the initialization will not occur). 
+
+Malicious user can initialize 2 receivers (`MicrogridBatteryWBNB` and `MicrogridBatteryWETH`). Then remove one receiver. When distributing rewards, 100% will be sent to the second receiver. After which the user will remove the second one, connect the first one and again receive all the rewards on the first receiver.
+
+This way the user will be able to receive extra rewards.
 
 ## Recommendations
 
@@ -323,7 +326,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-05'></a>C-05. Calculation in `addPoints` reduces the user's balance
+# [C-05] Calculation in `addPoints` reduces the user's balance
 
 ### Relevant GitHub Links
 	
@@ -355,7 +358,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-06'></a>C-06. Calculation for `finalAmount` will result in wrong decimals
+# [C-06] Calculation for `finalAmount` will result in wrong decimals
 
 ### Relevant GitHub Links
 
@@ -425,7 +428,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-07'></a>C-07. Wrong calculation for `finalAmount` may lead to loss of user funds
+# [C-07] Wrong calculation for `finalAmount` may lead to loss of user funds
 
 ### Relevant GitHub Links
 
@@ -493,7 +496,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-08'></a>C-08. Logic of `deposit` under conditions of `Sacrifice` is not implemented
+# [C-08] Logic of `deposit` under conditions of `Sacrifice` is not implemented
 
 ### Relevant GitHub Links
 
@@ -546,7 +549,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-09'></a>C-09. Wrong calculation for `amountWithBonus` may lead to loss of user funds
+# [C-09] Wrong calculation for `amountWithBonus` may lead to loss of user funds
 
 ### Relevant GitHub Links
 
@@ -613,7 +616,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-10'></a>C-10. Mint to an incorrectly specified address makes it impossible to buy a Battery NFT
+# [C-10] Mint to an incorrectly specified address makes it impossible to buy a Battery NFT
 
 ### Relevant GitHub Links
 
@@ -669,7 +672,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-11'></a>C-11. Accounting and updating `last_distPoints` allow malicious users to receive additional rewards
+# [C-11] Accounting and updating `last_distPoints` allow malicious users to receive additional rewards
 
 ### Relevant GitHub Links
 	
@@ -954,7 +957,7 @@ We recommend
 
 
 
-## <a id='C-12'></a>C-12. Calculation for `ExchangeRate` will result in wrong decimals
+# [C-12] Calculation for `ExchangeRate` will result in wrong decimals
 
 ### Relevant GitHub Links
 
@@ -997,7 +1000,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-13'></a>C-13. It's impossible for a user to claim his rewards, as `run` and `runFromUpkeep` will not pass `currentMinClaim` check
+# [C-13] It's impossible for a user to claim his rewards, as `run` and `runFromUpkeep` will not pass `currentMinClaim` check
 
 ### Relevant GitHub Links
 
@@ -1147,7 +1150,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-14'></a>C-14. Wrong calculation in `buyOrder` increases the `refundAmount`
+# [C-14] Wrong calculation in `buyOrder` increases the `refundAmount`
 
 ### Relevant GitHub Links
 	
@@ -1182,7 +1185,7 @@ Change the code in the following way:
 
 
 
-## <a id='C-15'></a>C-15. Missing a method for setting `MarketplaceContract`
+# [C-15] Missing a method for setting `MarketplaceContract`
 
 ### Relevant GitHub Links
 
