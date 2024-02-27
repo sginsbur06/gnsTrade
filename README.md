@@ -2,7 +2,7 @@
     - [C-01. It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#c-01-its-impossible-for-a-user-to-claim-his-rewards-as-performupkeep-claimfor-claimformany-leaves-rewards-on-contracts-batteryinteractweth-and-batteryinteractwbnb)
     - [C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards](#c-02-wrong-receivers-implementation-in-claimfor-will-result-in-loss-of-rewards)
     - [C-03. User's rewards to be lost until the method `compoundFor` is called for the first time](#c-03-users-rewards-to-be-lost-until-the-method-compoundfor-is-called-for-the-first-time)
-    - [C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#c-04-user-can-manipulate-with-adding-and-removing-receivers-which-will-lead-to-incorrect-calculation-of-rewards)
+    - [C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#c-04-malicious-user-can-manipulate-with-adding-and-removing-receivers-which-will-lead-to-incorrect-calculation-of-rewards)
     - [C-05. Calculation in `addPoints` reduces the user's balance](#c-05-calculation-in-addpoints-reduces-the-users-balance)
     - [C-06. Calculation for `finalAmount` will result in wrong decimals](#c-06-calculation-for-finalamount-will-result-in-wrong-decimals)
     - [C-07. Wrong calculation for `finalAmount` may lead to loss of user funds](#c-07-wrong-calculation-for-finalamount-may-lead-to-loss-of-user-funds)
