@@ -1,6 +1,6 @@
 - ## Critical Risk Findings
     - [C-01. It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#C-01)
-    - [C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards](#C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards)
+    - [C-02. Wrong receiver's implementation in `claimFor` will result in loss of rewards](#C-02)
     - [C-03. User's rewards to be lost until the method `compoundFor` is called for the first time](#C-03)
     - [C-04. User can manipulate with adding and removing receivers, which will lead to incorrect calculation of rewards](#C-04)
     - [C-05. Calculation in `addPoints` reduces the user's balance](#C-05)
