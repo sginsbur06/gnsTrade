@@ -148,3 +148,4 @@ An additional problem for the protocol would be that if, due to this situation, 
       esharePending = esharePending.sub(distributed);
 ```
 
+
