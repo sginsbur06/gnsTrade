@@ -83,7 +83,8 @@ Moreover, the update occurs only in the case of `totalReceiversAllocPoints == 0`
   }
 ```
 This creates the following attack vectors:
-    1. Via `Deposit`
+
+    1. Via Deposit
 
       The user has
 
