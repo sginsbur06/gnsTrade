@@ -114,7 +114,9 @@ This is where `rewards` are received from `Farm` (`_tryClaimFarm`) and `compound
 New value on the contract is `totalDistributePoints = 80000`.
 
 However, the `compound` for the user does not occur (since `totalReceiversAllocPoints != 0`) and there is no update to the `last_distPoints` value either.
+
     New values
+    
       - `individualShares = 300`
       - `MicrogridBatteryWBNB - receiver`
       - `receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000`
