@@ -1,3 +1,5 @@
+
+
 # [C-02] Calculation in `addPoints` reduces the user's balance
 
 ### Relevant GitHub Links
@@ -81,13 +83,21 @@ Moreover, the update occurs only in the case of `totalReceiversAllocPoints == 0`
   }
 ```
 This creates the following attack vectors:
-  1. The user has
-      - `MicrogridNFT id = 1`
-      - `individualShares = 100`
-      - `MicrogridBatteryWBNB - receiver`
-      - `receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000`
-      - `totalReceiversAllocPoints for user’s = 1000`
-      - `last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000`
+    1. Via `Deposit`
+
+      The user has
+
+      MicrogridNFT id = 1
+
+      individualShares = 100
+
+      MicrogridBatteryWBNB - receiver
+
+      receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000
+
+      totalReceiversAllocPoints for user’s = 1000
+
+      last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000
 
 At the same time, on the contract `totalDistributePoints = 50000`.
 
@@ -115,23 +125,17 @@ New value on the contract is `totalDistributePoints = 80000`.
 
 However, the `compound` for the user does not occur (since `totalReceiversAllocPoints != 0`) and there is no update to the `last_distPoints` value either.
 
-   
-    
-  The user ha
-      - `individualShares = 300`
-      - `MicrogridBatteryWBNB - receiver`
-      - `receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000`
-      - `totalReceiversAllocPoints for user’s = 1000`
-      - `last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000`
+    New values
 
+      individualShares = 300
 
-  1.  New values
-      - `MicrogridNFT id = 1`
-      - `individualShares = 100`
-      - `MicrogridBatteryWBNB - receiver`
-      - `receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000`
-      - `totalReceiversAllocPoints for user’s = 1000`
-      - `last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000`
+      MicrogridBatteryWBNB - receiver
+
+      receiversAllocPoints for user’s MicrogridBatteryWBNB = 1000
+
+      totalReceiversAllocPoints for user’s = 1000
+
+      last_distPoints[1][address(MicrogridBatteryWBNB)] = 50000
 
 Next, the user calls `claimFor`, where the `rewards` for `receiver` are calculated using `_getDistributionRewards` as follows
 ```solidity
@@ -159,4 +163,5 @@ An additional problem for the protocol would be that if, due to this situation, 
 ```solidity
       esharePending = esharePending.sub(distributed);
 ```
+
 
