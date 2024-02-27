@@ -20,6 +20,7 @@ A smart contract applicatoin for storing a password. Users should be able to sto
     - [Test Coverage](#test-coverage)
 - [Audit Scope Details](#audit-scope-details)
   - [Roles](#roles)
+  - [Sex](#roles)
 
 # Getting Started
 
