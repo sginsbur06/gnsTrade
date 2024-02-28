@@ -112,8 +112,8 @@ Recommend the EMP Fusion team review these findings in order of severity and pur
     - [[H-05] `getExchangeRate` not take into account the possibility of `tokens` in `Pair` with different `decimals`](#h-05-getexchangerate-not-take-into-account-the-possibility-of-tokens-in-pair-with-different-decimals)
     - [[H-06] Using `tx.origin` creates an opportunity for phishing attack](#h-06-using-txorigin-creates-an-opportunity-for-phishing-attack)
     - [[H-07] Missing slippage checks, deadline check is not effective](#h-07-missing-slippage-checks-deadline-check-is-not-effective)
-    - [[H-08] [H-08] Incorrect `path` array length specified](#h-08-incorrect-path-array-length-specified)
-    - [[H-09] [H-08] Storage mapping `lastClaimTime` is never initialized](#)
+    - [[H-08] Incorrect `path` array length specified](#h-08-incorrect-path-array-length-specified)
+    - [[H-09] Storage mapping `lastClaimTime` is never initialized](#)
 
 - ## Medium Risk Findings
     - [[M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients](#m-01-additional-check-in-listclaimablereceivers-results-in-an-empty-list-of-recipients)
