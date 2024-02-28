@@ -1,6 +1,6 @@
 <br/>
 <p align="center">
-<img src="./report-image.png" width="400" alt="Chainlink Brownie logo">
+<img src="./report-image.png" width="400" alt="Start">
 </a>
 </p>
 <br/>
