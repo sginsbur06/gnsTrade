@@ -1,6 +1,6 @@
 # Introduction
 
-A time-boxed security review of the **EMP Fusion** protocol was done by **Reviewer**, with a focus on the security aspects of the application's implementation.
+A security review of the **EMP Fusion** protocol was done by **Reviewer**, with a focus on the security aspects of the application's implementation.
 
 The objective of the assessment was to:
 - Identify potential security vulnerabilities within the smart contracts.
