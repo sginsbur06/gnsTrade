@@ -70,6 +70,8 @@ Out of scope:
 - other protocol contracts not listed above
 - economic attacks
 
+### Test Approach
+Using a combination of manual review and static analysis tools
 
 ### Issues Found
 The following number of issues were found, categorized by their severity:
