@@ -1,3 +1,23 @@
+# Severity classification
+
+| Severity               | Impact: High | Impact: Medium | Impact: Low |
+| ---------------------- | ------------ | -------------- | ----------- |
+| **Likelihood: High**   | Critical     | High           | Medium      |
+| **Likelihood: Medium** | High         | Medium         | Low         |
+| **Likelihood: Low**    | Medium       | Low            | Low         |
+
+**Impact** - the technical, economic and reputation damage of a successful attack
+
+**Likelihood** - the chance that a particular vulnerability gets discovered and exploited
+
+**Severity** - the overall criticality of the risk
+
+# Security Assessment Summary
+
+**_review commit hash_ - [272db20d163dc9b16b691bd98cef9cd88e10e833](https://github.com/DeFi-Gang/emp-fusion-contracts/commit/272db20d163dc9b16b691bd98cef9cd88e10e833)**
+
+# Findings Summary
+
 - ## Critical Risk Findings
     - [[C-01] It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`](#c-01-its-impossible-for-a-user-to-claim-his-rewards-as-performupkeep-claimfor-claimformany-leaves-rewards-on-contracts-batteryinteractweth-and-batteryinteractwbnb)
     - [[C-02] Wrong receiver's implementation in `claimFor` will result in loss of rewards](#c-02-wrong-receivers-implementation-in-claimfor-will-result-in-loss-of-rewards)
@@ -15,11 +35,49 @@
     - [[C-14] Wrong calculation in `buyOrder` increases the `refundAmount`](#c-14-wrong-calculation-in-buyorder-increases-the-refundamount)
     - [[C-15] Missing a method for setting `MarketplaceContract`](#c-15-missing-a-method-for-setting-marketplacecontract)
 
+- ## High Risk Findings
+    - [[H-01] Missing method `receive` in contract](#h-01-missing-method-receive-in-contract)
+    - [[H-02] Missing a method for setting BNB `pointsPerDollar`](#h-02-missing-a-method-for-setting-bnb-pointsperdollar)
+    - [[H-03] Unused `payable` state mutability](#h-03-unused-payable-state-mutability)
+    - [[H-04] Exchange Rate can be manipulated](#h-04-exchange-rate-can-be-manipulated)
+    - [[H-05] `getExchangeRate` not take into account the possibility of `tokens` in `Pair` with different `decimals`](#h-05-getexchangerate-not-take-into-account-the-possibility-of-tokens-in-pair-with-different-decimals)
+    - [[H-06] Using `tx.origin` creates an opportunity for phishing attack](#h-06-using-txorigin-creates-an-opportunity-for-phishing-attack)
+    - [[H-07] Missing slippage checks, deadline check is not effective](#h-07-missing-slippage-checks-deadline-check-is-not-effective)
+    - [[H-08] [H-08] Incorrect `path` array length specified](#h-08-incorrect-path-array-length-specified)
+
+- ## Medium Risk Findings
+    - [[M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients](#m-01-additional-check-in-listclaimablereceivers-results-in-an-empty-list-of-recipients)
+    - [[M-02] User may be incorrectly excluded from the list of `activeTokenIds`](#m-02-user-may-be-incorrectly-excluded-from-the-list-of-activetokenids)
+    - [[M-03] Too large `batchSize` can lead to DoS](#m-03-too-large-batchsize-can-lead-to-dos)
+    - [[M-04] Missing checking that input array lengths are equal to each other](#m-04-missing-checking-that-input-array-lengths-are-equal-to-each-other)
+    - [[M-05] Missing checking on the setter method that the length of input array is equal to the required value](#m-05-missing-checking-on-the-setter-method-that-the-length-of-input-array-is-equal-to-the-required-value)
+    - [[M-06] Missing checking on the setter method of a descending order of values](#m-06-missing-checking-on-the-setter-method-of-a-descending-order-of-values)
+    - [[M-07] Oracle price is used without checking validity](#m-07-oracle-price-is-used-without-checking-validity)
+    - [[M-08] Use safeTransfer()/safeTransferFrom() instead of transfer()/transferFrom()](#m-08-use-safetransfersafetransferfrom-instead-of-transfertransferfrom)
+    - [[M-09] Wrong use of `transferFrom` ERC721A for transfer to `address(0)`](#m-09-wrong-use-of-transferfrom-erc721a-for-transfer-to-address0)
+    - [[M-10] Missing Min Max validation for `sacMultiplier`](#m-10-missing-min-max-validation-for-sacmultiplier)
+    - [[M-11] Lack of price validation in the method `setManualPrice`](#m-11-lack-of-price-validation-in-the-method-setmanualprice)
+    - [[M-12] Missing checks for user's `Microgrid NFT` ownership of `battery`, `treasury` ownership of `Microgrid NFT`](#m-12-missing-checks-for-users-microgrid-nft-ownership-of-battery-treasury-ownership-of-microgrid-nft)
+    - [[M-13] Use of `transfer` might render BNB impossible to withdraw](#m-13--use-of-transfer-might-render-bnb-impossible-to-withdraw)
+    - [[M-14] Missing Min Max validation for `autoCompoundMultiplier`](#m-14-missing-min-max-validation-for-autocompoundmultiplier)
+
+- ## Low Risk Findings
+    - [[L-01] Disabled `microgridBatteryNFTContracts` are not removed from the array](#l-01-disabled-microgridbatterynftcontracts-are-not-removed-from-the-array)
+    - [[L-02] Missing zero address checks](#l-02-missing-zero-address-checks)
+    - [[L-03] Missing validation for `bonusStartTime` and `bonusEndTime` of `BonusMultiplier`](#l-03-missing-validation-for-bonusstarttime-and-bonusendtime-of-bonusmultiplier)
+    - [[L-04] Missing setting of `token` for `allowedCurrencies`](#l-04-missing-setting-of-token-for-allowedcurrencies)
+
+- ## Informational
+    - [[I-01] Unused code](#i-01-unused-code)
+    - [[I-02] Unused method `burn`](#i-02-unused-method-burn)
+    - [[I-03] Adding a returns value `orderId`](#i-03-adding-a-returns-value-orderid)
+    - [[I-04] Ineffective TWAP implementation](#i-04-ineffective-twap-implementation)
+
+
+
 
 
 # Detailed Findings
-
-# Critical Risk Findings
 
 # [C-01] It's impossible for a user to claim his rewards, as `performUpkeep`, `claimFor`, `claimForMany` leaves rewards on contracts `BatteryInteractWETH` and `BatteryInteractWBNB`
 
@@ -2147,27 +2205,49 @@ https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WET
 ## Description
 
 The `AggregatorV3Interface` interface in `MarketplaceInteract` is not used anywhere and should be removed.
+
 The `AggregatorV3Interface` interface in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `AggregatorV3Interface` interface in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `AggregatorV3Interface` interface in `MicrogridBatterySplitMyPositionInteract` is not used anywhere and should be removed.
+
 The `IPancakeFactory` interface in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `IPancakeFactory` interface in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `PriceRecord` struct in `MarketplaceInteract` is not used anywhere and should be removed.
+
 The `allowedCurrencyInfo` struct in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `allowedCurrencyInfo` struct in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `pancakePairToken` storage variable in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `pancakePairToken` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `empToken` storage variable in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `empToken` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `wrapped` storage variable in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `wrapped` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `allowedCurrencies` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `allowedMultiple` storage mapping in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `allowedMultiple` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `ownsBattery` storage mapping in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `ownsBattery` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `batteriesActive` storage mapping in `WBNBBatteryInteract` is not used anywhere and should be removed.
+
 The `batteriesActive` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 The `setReceiver` function in `IFusionRewardDistributor` is not used anywhere and should be removed.
 
 ## Recommendations
@@ -2213,9 +2293,6 @@ For convenience of working with the protocol, recommend adding a returns value `
 # [I-04] Ineffective TWAP implementation
 
 The contracts `MicrogridNFTDeposit` and `MarketplaceInteract` uses prices based on `twap` from oracle. Despite the fact that the Oracle contract (0x0Fe57361B0E3Fc7F61972BD839Ddaa8Da3E691D2) is out of scope, we would like to draw attention to the fact that the `twap` was not implemented effectively enough. In particular, the `twap` window and order of `observations` are not defined.
-
-
-
 
 
 
