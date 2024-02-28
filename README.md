@@ -12,7 +12,7 @@ A smart contract security review can never prove the complete absence of vulnera
 
 # About **Reviewer**
 
-**Reviewer** is an independent smart contract security researcher who specializes in smart contract audits. 
+**Reviewer** is an independent smart contract security researcher who specializes in smart contract audits. He has experience on every part of the blockchain technology stack, including but not limited to protocol design and smart contracts.
 
 # About **EMP Fusion**
 
