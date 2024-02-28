@@ -1207,3 +1207,1015 @@ The `MicrogridBatterySplitMyPositionInteract` is missing a method for setting `M
 
 Add a setter for `MarketplaceContract`. 
 
+
+
+# [H-01] Missing method `receive` in contract
+
+### Relevant GitHub Links
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceExchange.sol
+
+## Severity
+
+**Impact:**
+Medium, as no value will be lost but the contract functionality will be limited
+
+**Likelihood:**
+High, as the function will just revert every time
+
+## Description
+
+The contract `MarketplaceExchange` is missing a method `receive`. This makes it impossible to receive BNB from the contract `MarketplaceInteract`, which violates the functionality of the method `buyPoints`.
+
+## Recommendations
+
+Add  method `receive` to the contract `MarketplaceExchange`. 
+
+
+
+# [H-02] Missing a method for setting BNB `pointsPerDollar`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users and restrict the functionality of contract
+
+**Likelihood:**
+Medium, it affects user assets only with paying with BNB
+
+## Description
+
+The `MarketplaceInteract` is missing a method for setting BNB `pointsPerDollar`. This can lead to the loss of user funds when calling the method `buyPoints` and paying with BNB.
+
+## Recommendations
+
+Add a setter for BNB `pointsPerDollar`. 
+
+
+
+# [H-03] Unused `payable` state mutability
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1291
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1292
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L221
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+Medium, as it requires a error on user's side
+
+## Description
+
+The method has a `payable` state mutability, but nowhere in the code implementation is `msg.value` used. (Also, the logic of the method does not imply the use of payment in BNB). This may cause the user's BNB to get stuck in contract.
+
+  Functions with this issue:
+  - `WBNBBatteryInteract.buyBattery`
+  - `WETHBatteryInteract.buyBattery`
+  - `BatteryInteractSplitMyPosition.buyBattery`
+
+
+## Recommendations
+
+Remove `payable` state mutability.  
+
+
+
+# [H-04] Exchange Rate can be manipulated
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1202
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L906
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for protocol
+
+**Likelihood:**
+Medium, as it happens only in case of using the method as the main price feed
+
+## Description
+
+A malicious user can manipulate the protocol to get more shares from the `MicrogridNFTDeposit` than they should. The method `deposit` for calculations uses `getExchangeRate` - in which a possible option is to get the price through `getRateFromDex`. The calculation uses values of `reserve0` and `reserve1` in LP pair (`IPancakePair`) that can be manipulated by flashLoan.
+
+A similar method `getRateFromDex` is also implemented in the contract `ExchangeRateHelper`.
+
+## Recommendations
+
+Add validation for price obtained from `getRateFromDex` using external oracles.   
+
+
+
+# [H-05] `getExchangeRate` not take into account the possibility of `tokens` in `Pair` with different `decimals`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1202
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L906
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for protocol
+
+**Likelihood:**
+Medium, as it happens only in case of using the method as the main price feed
+
+## Description
+
+In method `getExchangeRate` one of the possible options is to get the price through `getRateFromDex`. Implementation of `getExchangeRate` in a protocol assumes that it returns values with `decimals == 18`.
+
+`getRateFromDex` to calculate `tokenPrice` uses values of `reserve0` and `reserve1` in LP pair (`IPancakePair`).
+However, tokens in a pair may have different `decimals` values (and therefore - `reserve0`, `reserve1`). In this case, the calculation for `getExchangeRate` will be performed incorrectly.
+
+A similar method `getRateFromDex` is also implemented in the contract `ExchangeRateHelper`.
+
+## Recommendations
+
+Add logic that takes into account the possibility of tokens with different `decimals` being in a pair.
+
+
+
+# [H-06] Using `tx.origin` creates an opportunity for phishing attack
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1314-L1321
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for user
+
+**Likelihood:**
+Medium, as the attack is not easy to execute
+
+## Description
+
+The method `deposit` is implemented so that `transferFrom` contains `tx.origin` as parameter `from`.
+```solidity
+    if ((DepositType(depositType) == DepositType.BY_EMP_ETH_LP)) {
+      empEthLpToken.transferFrom(tx.origin, address(microgridNFTContract), amount);
+
+    } else if ((DepositType(depositType) == DepositType.DEFAULT)) {
+      empToken.transferFrom(msg.sender, address(microgridNFTContract), amount);
+
+    } else if ((DepositType(depositType) == DepositType.BY_UPEMP)) {
+      upEmp.transferFrom(tx.origin, address(microgridNFTContract), amount);
+    }
+```
+Using `tx.origin` is a dangerous practice as it opens the door to phishing attacks.
+
+## Recommendations
+
+To prevent `tx.origin` phishing attacks, `msg.sender` should be used instead of `tx.origin`. 
+
+
+
+# [H-07] Missing slippage checks, deadline check is not effective
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1338
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1374
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1340
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1378
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+Medium, as it is not expected to happen every time, but there are multiple attack paths here
+
+## Description
+
+The `run` (and `runFromUpkeep`) make a dangerous assumption about `slippage`, namely that there is not any. 
+The `deadline` check is set to `block.timestamp + 120`, which means the deadline check is disabled.
+
+Users can be frontrun and receive a worse price than expected when they initially submitted the transaction. There's no protection at all, no minimum return amount or deadline for the trade transaction to be valid which means the trade can be delayed by miners or users congesting the network, as well as being sandwich attacked - ultimately leading to loss of user funds.
+
+Functions with these issues:
+  - `WBNBBatteryInteract.run`
+  - `WBNBBatteryInteract.runFromUpkeep`
+  - `WETHBatteryInteract.run`
+  - `WETHBatteryInteract.runFromUpkeep`
+
+## Recommendations
+
+Consider adding slippage protection, `amountOutMinimum` can be either set manually or calculated based on external oracles. 
+
+
+
+# [H-08] Incorrect `path` array length specified
+
+### Relevant GitHub Links
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1335-L1338
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1373-L1376
+
+## Severity
+
+**Impact:**
+Medium, as no value will be lost but the contract functionality will be limited
+
+**Likelihood:**
+High, as the functions will just revert every time
+
+## Description
+
+The methods `run` and `runFromUpkeep` have incorrectly specified `path` arrays lengths.
+
+## Recommendations
+
+Change the code in the following way:
+
+```diff
+-     address[] memory path = new address[](2);
++     address[] memory path = new address[](3);
+      path[0] = address(eshareToken);
+      path[1] = address(WBNB);
+      path[2] = address(WETH);
+``` 
+
+
+
+# [M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionAutoClaimUpkeep.sol#L32
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L428
+
+## Severity
+
+**Impact:**
+Medium, as this will lead to a incomplete use of protocol capabilities
+
+**Likelihood:**
+Medium, as it happens only for using of AutoClaim
+
+## Description
+
+Method `checkUpkeep` generates a list of receivers using an external call to method `listClaimableReceivers` on contract `FusionRewardDistributor`. Since this happens before receiving rewards on `FusionRewardDistributor` through `_tryClaimFarm`, the method `getTotalRewards` gives a result of 0, and the receiver will not be included in the `eligibleReceivers` list (according to the following code):
+
+```solidity
+if (getTotalRewards(_tokenId, _receiver) >= IBattery(_receiver).minClaimAmount()) {
+  eligibleReceivers[eligibleCount++] = _receiver;
+}
+```
+Therefore `checkUpkeep` will generate always an empty list and method `performUpkeep` a will not work.
+
+## Recommendations
+
+Remove check in the method `listClaimableReceivers`.
+Change the code in the following way:
+
+```diff
+  function listClaimableReceivers(uint256 _startIndex, uint256 _endIndex) external view returns (uint256[] memory, address[][] memory) {
+    // Ensure _endIndex is within the bounds of the active token IDs array
+    _endIndex = Math.min(_endIndex + 1, activeTokenIds.length());
+
+    // Initialize temporary arrays to hold token IDs and receivers
+    uint256[] memory tokenIds = new uint256[](_endIndex - _startIndex);
+    address[][] memory temp = new address[][](_endIndex - _startIndex);
+
+    uint256 counter = 0; // A counter to keep track of how many eligible receivers we've found
+
+    // Loop over the specified range of token IDs
+    for (uint256 i = _startIndex; i < _endIndex; i++) {
+      uint256 _tokenId = activeTokenIds.at(i);
+      uint256 _numReceivers = activeReceivers[_tokenId].length();
+
+      // Initialize an array to hold the eligible receivers for the current token ID
+      address[] memory eligibleReceivers = new address[](_numReceivers);
+      uint256 eligibleCount = 0;
+
+      // Loop over all receivers for the current token ID
+      for (uint256 j = 0; j < _numReceivers; j++) {
+        address _receiver = activeReceivers[_tokenId].at(j);
+
+-       // If the receiver can claim rewards, add them to the eligibleReceivers array
+-       if (getTotalRewards(_tokenId, _receiver) >= IBattery(_receiver).minClaimAmount()) {
+          eligibleReceivers[eligibleCount++] = _receiver;
+-       }
+      }
+
+        ........................
+``` 
+
+
+
+# [M-02] User may be incorrectly excluded from the list of `activeTokenIds`
+
+### Relevant GitHub Links
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L95
+
+## Severity
+
+**Impact:**
+Medium, as it will not lead to the loss of rewards, but makes them unavailable through one method
+
+**Likelihood:**
+Medium, as it occurs only when calling automation
+
+## Description
+
+The method `_setReceiver` removes the user's `microgridNftId` from the list of `activeTokenIds` if `_allocPoints == 0` for `_receiver`.
+As it's implemented with this code:
+
+```solidity
+  if (_allocPoints > 0) {
+    if (!activeReceivers[_microgridNftId].contains(_receiver)) {
+      activeReceivers[_microgridNftId].add(_receiver);
+    }
+    if (!activeTokenIds.contains(_microgridNftId)) {
+      activeTokenIds.add(_microgridNftId);
+    }
+  } else {
+    if (activeReceivers[_microgridNftId].contains(_receiver)) {
+      activeReceivers[_microgridNftId].remove(_receiver);
+    }
+    if (activeTokenIds.contains(_microgridNftId)) {
+      activeTokenIds.remove(_microgridNftId);
+    }
+  }
+```
+However, the user may still have other receivers with `_allocPoints > 0`. Excluding a user from the list of `activeTokenIds` will result in him being excluded from the distribution of rewards through a method `performUpkeep` in `FusionAutoClaimUpkeep`.
+
+## Recommendations
+
+Add additional check that the user has no active receivers left.
+Change the code in the following way:
+
+```diff
+- if (activeTokenIds.contains(_microgridNftId)) {
++ if (activeTokenIds.contains(_microgridNftId) && activeReceivers[_microgridNftId].length() == 0) {
+    activeTokenIds.remove(_microgridNftId);
+  }
+```
+
+
+
+# [M-03] Too large `batchSize` can lead to DoS
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionAutoClaimUpkeep.sol#L23
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L428
+
+## Severity
+
+**Impact:**
+High, as the contract will be in a state of DoS, without a way for use `FusionAutoClaimUpkeep`
+
+**Likelihood:**
+Low, as it requires a really big `batchSize`
+
+## Description
+
+The `listClaimableReceivers` method in contract `FusionRewardDistributor` loop over the `activeTokenIds`. 
+The number of iterations is determined by the parameter `batchSize` in the contract `FusionAutoClaimUpkeep`. If at some point there are now so large `batchSize`, iterating will become very costly and can result in a gas cost that is over the block gas limit. This would lead to a Denial of Service as users wouldn’t be able to properly use the protocol functions.
+
+## Recommendations
+
+Limit the `batchSize` that can be used to a value low enough that there is no risk of running out of gas. 
+
+
+
+# [M-04] Missing checking that input array lengths are equal to each other
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L920
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L64
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1156
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L990
+
+## Severity
+
+**Impact:**
+Medium, as it will not lead to the loss of funds
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+In contract `MarketplaceInteract`
+  - `setBonusTiers` method does not check if input array lengths are equal to each other.
+
+In contract `MicrogridBatteryManager`
+  - `activateBattery` method does not check if input array lengths are equal to each other.
+
+In contract `MicrogridNFTDeposit`
+  - `setAggregators` method does not check if input array lengths are equal to each other.
+
+In contract `ExchangeRateHelper`
+  - `setAggregators` method does not check if input array lengths are equal to each other.
+
+## Recommendations
+
+Add a checks that input array lengths are equal to each other.  
+
+
+
+# [M-05] Missing checking on the setter method that the length of input array is equal to the required value
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L910C1-L925C4
+
+## Severity
+
+**Impact:**
+High, as it will result in block the functionality of contract
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+The `getBonusPercent` method loop over the `bonusTiers` array with condition `i < 10`. 
+
+```solidity
+  function getBonusPercent(uint256 amount) internal view returns (uint256) {
+    for (uint256 i = 0; i < 10; i++) {
+      if (amount >= bonusTiers[i].amount) {
+        return bonusTiers[i].percent;
+      }
+    }
+
+    return 0;
+  }
+```
+However, in the method `setBonusTiers` the length of the `bonusTiers` array is not limited in any way. Thus, if the length of the `bonusTiers` array will be less than 10, then calling `getBonusPercent` will result in revert. This will block the functionality of the method `buyPoints.`
+
+## Recommendations
+
+Add a check that input array lengths in the method `setBonusTiers` are equal to 10. 
+
+
+
+# [M-06] Missing checking on the setter method of a descending order of values
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L910C1-L930
+
+## Severity
+
+**Impact:**
+High, as it will result in wrong points calculations
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+The logic of the method `getBonusPercent` involves searching through `bonusTiers[i].amount` values, starting from largest to smallest (in order to find the first “greater than”). This imposes special requirements on the formation of the order of values within the array passed to the setter `setBonusTiers`. However, the method `setBonusTiers` does not check array values. This can lead to `amount` values in the `bonusTiers` array not being in descending order, which will lead to incorrect calculation of bonusPercent.
+
+Also, this logic must be taken into account when making changes to a separate `BonusTier` through the method `setBonusTier`.
+
+## Recommendations
+
+Add a check in the method `setBonusTiers` that `amount` values in the `bonusTiers` input array are in descending order. 
+Add a check in the method `setBonusTier` that `amount` value with `tierIndex` is less than the previous one (`tierIndex - 1`) and greater than the next one (`tierIndex + 1`).  
+
+
+
+# [M-07] Oracle price is used without checking validity
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L932
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1168
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L940
+
+## Severity
+
+**Impact:**
+Medium, it affects user assets only when the price feed oracle is in bad status
+
+**Likelihood:**
+Medium, it affects only when the price feed oracle is in bad status
+
+## Description
+
+Some methods fetches data from Chainlink (or another price feed) with `IAggregator` and `latestAnswer`, `latestRoundData`. To ensure accurate price usage, it's vital to regularly check the last update timestamp against a predefined delay. However, the current implementation lacks checks for the staleness of the price obtained from price feed. Without proper checks, consumers of protocol may continue using outdated, stale, or incorrect data if oracles are unable to submit and start a new round.
+
+Functions using price feeds
+  - `MarketplaceInteract.buyPoints` 
+  - `MicrogridNFTDeposit.getRateFromChainlink` 
+  - `ExchangeRateHelper.getRateFromChainlink` 
+
+## Recommendations
+
+Implement a mechanism to check the heartbeat of the price feed and compare it against a predefined maximum delay (`MAX_DELAY`). Adjust the `MAX_DELAY` variable based on the observed heartbeat.  It is recommended to implement checks to ensure that the price returned by price feed is not stale.  
+
+
+
+# [M-08] Use safeTransfer()/safeTransferFrom() instead of transfer()/transferFrom()
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L932
+
+## Severity
+
+**Impact:**
+Medium, it affects user assets only with tokens that don’t correctly implement the latest EIP20 spec
+
+**Likelihood:**
+Medium, it affects only with tokens that don’t correctly implement the latest EIP20 spec
+
+## Description
+
+There is `transferFrom` calls that do not check the return value (some tokens signal failure by returning false).
+It is a good idea to add a require() statement that checks the return value of ERC20 token transfers or to use something like OpenZeppelin’s safeTransfer()/safeTransferFrom() unless one is sure the given token reverts in case of a failure. Failure to do so will cause silent failures of transfers and affect token accounting in contract.
+
+However, using require() to check transfer return values could lead to issues with non-compliant ERC20 tokens which do not return a boolean value. Therefore, it's highly advised to use OpenZeppelin’s safeTransfer()/safeTransferFrom().
+
+## Proof of Concept
+
+MarketplaceInteract.sol
+
+[L945:](https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L945) `IERC20(token).transferFrom(msg.sender, address(marketplaceContract), amount);`
+
+## Recommendations
+
+Consider using `safeTransfer()/safeTransferFrom()` instead of `transfer()/transferFrom()`. 
+
+
+
+# [M-09] Wrong use of `transferFrom` ERC721A for transfer to `address(0)`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPosition.sol#L232
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWBNB.sol#L225
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWETH.sol#L225
+
+## Severity
+
+**Impact:**
+Medium, as it will not lead to the loss of funds
+
+**Likelihood:**
+Medium, as it does not affect the functionality of the entire protocol
+
+## Description
+
+The `upgradeBattery` removes ownership of battery and then must `burn` `BatteryNFT`. The issues are that:
+  - contract `MicrogridBatterySplitMyPosition` (`MicrogridBatteryWBNB`, `MicrogridBatteryWETH`) inherits from contract `ERC721A`, in which `transferFrom` to the address(0) is prohibited
+  - `usersMicrogridToken Id` is passed as a parameter for burn, but the `MicrogridBatterySplitMyPosition Id` (`MicrogridBatteryWBNB Id`, `MicrogridBatteryWETH Id`) should be passed (in addition, it's necessary to take into account that all `MicrogridBatterySplitMyPosition NFT` (`MicrogridBatteryWBNB NFT`, `MicrogridBatteryWETH NFT`) belong to the `address(this)`)
+  - in the current implementation the method does not work
+
+## Recommendations
+
+It is recommended to use the method `_burn` with the correct `NFT Id` as parameter.   
+
+
+
+# [M-10] Missing Min Max validation for `sacMultiplier`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1093
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+The method `setSacrificeContract` is implemented so that there are no any restrictions on the minimum and maximum values of the parameter `sacMultiplier`. This parameter is used in calculating the size of the user’s deposit in method `deposit` (in particular, `sacMultiplier == 0` will result in the complete loss of the user's funds).
+
+## Recommendations
+
+It is recommended to add storage variables defining Min and Max values of `sacMultiplier`.
+Add a suitable check to the method `setSacrificeContract`. 
+
+
+
+# [M-11] Lack of price validation in the method `setManualPrice`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1151
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+Low, as it requires a malicious/compromised owner or a big error on his side
+
+## Description
+
+The `setManualPrice` method allows `owner` to set a price without any validation. This approach significantly increases the risk of protocol centralization.
+
+## Recommendations
+
+Add validation for owner set price using external oracles. 
+
+
+
+# [M-12] Missing checks for user's `Microgrid NFT` ownership of `battery`, `treasury` ownership of `Microgrid NFT`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L240
+
+## Severity
+
+**Impact:**
+High, as it will lead to the loss of funds and restriction on the functionality of protocol
+
+**Likelihood:**
+Low, as it occurs only in this method
+
+## Description
+
+The method `split` is implemented so that it missed checks that:
+ - user's Microgrid NFT must own the battery
+ - the treasury must own Microgrid NFT
+
+This may result in the method `split` being used by a user who does not own the `battery`, causing financial loss to the protocol.
+
+## Recommendations
+
+Change the code in the following way:
+
+```diff
+  function split(uint256 sharesAmount, uint256 pricePerShare) public nonReentrant {
+    // Find user's microgrid token ID.
+    uint256 usersMicrogridToken = microgridContract.tokenByWallet(msg.sender);
+
+    // Requires
+    require(usersMicrogridToken > 0, "You must own a Microgrid NFT.");
++   require(batteryContract.checkBattery(usersMicrogridToken) == true, "Your Microgrid does not own this battery.");
+    require(sharesAmount <= microgridContract.individualShares(usersMicrogridToken), "You cannot split more shares than you own.");
+
+    // Remove the sharesAmount from user's individualShares temporarily.
+    uint256 currentShares = microgridContract.individualShares(usersMicrogridToken);
+    uint256 newShares = currentShares - sharesAmount;
+    microgridContract.setShares(newShares, usersMicrogridToken);
+
+    // Add the sharesAmount temporarily to the Treasury wallet.
+    uint256 treasuryMicrogridToken = microgridContract.tokenByWallet(treasury);
++   require(treasuryMicrogridToken > 0, "Treasury must own a Microgrid NFT.");
+    uint256 treasuryCurrentShares = microgridContract.individualShares(treasuryMicrogridToken);
+    uint256 treasuryNewShares = treasuryCurrentShares + sharesAmount;
+    microgridContract.setShares(treasuryNewShares, treasuryMicrogridToken);
+    ....................
+```   
+
+
+
+# [M-13]  Use of `transfer` might render BNB impossible to withdraw
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L344-L345
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L356
+
+## Severity
+
+**Impact:**
+High, as it will lead to the loss of funds and restriction on the functionality of protocol
+
+**Likelihood:**
+Low, as it occurs only in this method
+
+## Description
+
+When withdrawing BNB, the `BatteryInteractSplitMyPosition` contract uses Solidity’s `transfer` function. This has some notable shortcomings when the withdrawer is a smart contract, which can render BNB impossible to withdraw. Specifically, the withdrawal will inevitably fail when:
+
+  - The withdrawer smart contract does not implement a payable fallback function.
+  - The withdrawer smart contract implements a payable fallback function which uses more than 2300 gas units.
+  - The withdrawer smart contract implements a payable fallback function which needs less than 2300 gas units but is called through a proxy that raises the call’s gas usage above 2300.
+
+## Recommendations
+
+Recommendation is to stop using `transfer` in code and switch to using `call` instead. Additionally, note that the `sendValue` function available in OpenZeppelin Contract’s `Address` library can be used to transfer the withdrawn BNB without being limited to 2300 gas units.   
+
+
+
+# [M-14] Missing Min Max validation for `autoCompoundMultiplier`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol
+
+## Severity
+
+**Impact:**
+High, as this will lead to a monetary loss for users
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+The methods `setCompoundContract`, `updateAutoCompoundMultiplier` are implemented so that there are no any restrictions on the minimum and maximum values of the parameter `autoCompoundMultiplier`. This parameter is used in calculating the size of the user’s `compoundAmount` in the methods `compoundForTokenId`, `compoundForUser` (in particular, `autoCompoundMultiplier == 0` will result in the complete loss of the user's funds).
+
+## Recommendations
+
+It is recommended to add storage variables defining Min and Max values of `autoCompoundMultiplier`.
+Add a suitable check to the methods `setCompoundContract`, `updateAutoCompoundMultiplier`.   
+
+
+
+# [L-01] Disabled `microgridBatteryNFTContracts` are not removed from the array
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L59
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryManager.sol#L64
+
+## Severity
+
+**Impact:**
+Low, as it will not lead to the loss of funds or restrict the functionality of contract
+
+**Likelihood:**
+Low, as it happens only for the case of removing battery
+
+## Description
+
+The method `activateBattery` when disabling a previously added `microgridBatteryNFTContracts` (`allocPoints == 0`), does not remove it from the array `batteryInfo.ownedBatteries`. 
+Therefore, the method `getBatteryListByUser` will always return a complete list of all user's `microgridBatteryNFTContracts` (with `allocPoints == 0` and `allocPoints > 0`).
+
+## Recommendations
+
+Add logic that removes inactive `microgridBatteryNFTContracts` from the array (using OpenZeppelin’s EnumerableSet is also possible). 
+
+
+
+# [L-02] Missing zero address checks
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1031
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1156
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L273
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L310
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L314
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L322
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L326
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L336
+
+## Severity
+
+**Impact:**
+Low, as it will not lead to the loss of funds or big restriction on the functionality of protocol
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+Contracts have address fields in multiple methods. These methods are missing address validations. Each address should be validated and checked to be non-zero. This is also considered
+a best practice. A wrong user input or defaulting to the zero addresses for a missing input can lead to the contract needing to redeploy or wasted gas.
+
+  Functions with missing zero address checks
+  - `MicrogridNFTDeposit.constructor` 
+  - `MicrogridNFTDeposit.setAggregators` 
+  - `MicrogridNFT.allowMultiple` 
+  - `MicrogridNFT.setDepositContract` 
+  - `MicrogridNFT.setRewardContract` 
+  - `MicrogridNFT.setWhitelistedContracts` 
+  - `MicrogridNFT.setCompoundContract` 
+  - `MicrogridNFT.setSigner` 
+
+## Recommendations
+
+It is recommended to validate that each address input is non-zero. 
+
+
+
+# [L-03] Missing validation for `bonusStartTime` and `bonusEndTime` of `BonusMultiplier`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1062
+
+## Severity
+
+**Impact:**
+Low, as it will not lead to the loss of funds or big restriction on the functionality of protocol
+
+**Likelihood:**
+Low, as it requires a big error on owner's side
+
+## Description
+
+The method `setBonusMultiplier` do not validate that `bonusStartTime` is less than `bonusEndTime`. If those values are not correctly set, then applying the parameter `bonusMultiplier` will become impossible.
+
+## Recommendations
+
+Add a validation logic inside `setBonusMultiplier` method to ensure that `bonusStartTime` is less than `bonusEndTime`. 
+
+
+
+# [L-04] Missing setting of `token` for `allowedCurrencies`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1072
+
+## Severity
+
+**Impact:**
+Low, as it will not lead to the loss of funds or restriction on the functionality of protocol
+
+**Likelihood:**
+Low, as it occurs only in this method
+
+## Description
+
+The method `setAllowedCurrency` is implemented so that it missed the setting of  `allowedCurrencies[_token].token`.
+
+## Recommendations
+
+Change the code in the following way:
+
+```diff
+  function setAllowedCurrency(
+    address _token,
+    address _lpToken,
+    uint256 _sharesPerEMP,
+    bool _allowed
+  ) public onlyOwner {
++   allowedCurrencies[_token].token = _token;
+    allowedCurrencies[_token].lpToken = _lpToken; // The Cake-LP token for the primary trading pair for this token.
+    allowedCurrencies[_token].sharesPerEMP = _sharesPerEMP; // Amount of microgrid shares allocated per $1 deposited.
+    allowedCurrencies[_token].allowed = _allowed; // Only allowed = true tokens are able to be deposited.
+  }
+```  
+
+
+
+# [I-01] Unused code
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L699
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L703
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L703
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L119
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1106
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1106
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L879
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1238
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1238
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1247
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1247
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1249
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1249
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1255
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1255
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1263
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1263-L1265
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1264-L1266
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L896
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L896
+
+## Description
+
+The `AggregatorV3Interface` interface in `MarketplaceInteract` is not used anywhere and should be removed.
+The `AggregatorV3Interface` interface in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `AggregatorV3Interface` interface in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `AggregatorV3Interface` interface in `MicrogridBatterySplitMyPositionInteract` is not used anywhere and should be removed.
+The `IPancakeFactory` interface in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `IPancakeFactory` interface in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `PriceRecord` struct in `MarketplaceInteract` is not used anywhere and should be removed.
+The `allowedCurrencyInfo` struct in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `allowedCurrencyInfo` struct in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `pancakePairToken` storage variable in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `pancakePairToken` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `empToken` storage variable in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `empToken` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `wrapped` storage variable in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `wrapped` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `allowedCurrencies` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `allowedMultiple` storage mapping in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `allowedMultiple` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `ownsBattery` storage mapping in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `ownsBattery` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `batteriesActive` storage mapping in `WBNBBatteryInteract` is not used anywhere and should be removed.
+The `batteriesActive` storage mapping in `WETHBatteryInteract` is not used anywhere and should be removed.
+The `setReceiver` function in `IFusionRewardDistributor` is not used anywhere and should be removed.
+
+## Recommendations
+
+It is recommended to remove any unused code or provide valid recommendations and suggestions on the documentation on how to use those.  
+
+
+
+# [I-02] Unused method `burn`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPosition.sol#L225
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol
+
+## Description
+
+The method `burn` can only be externally called by the contract `MicrogridBatterySplitMyPositionInteract`.
+```solidity
+  require(interactContract == msg.sender, "Only the interact contract can burn.");
+```
+However, `MicrogridBatterySplitMyPositionInteract` implementation does not have the functionality to call method `burn` in `MicrogridBatterySplitMyPosition`.
+
+## Recommendations
+
+Add the necessary functionality to the contract `MicrogridBatterySplitMyPositionInteract` or remove unused method `burn`. 
+
+
+
+# [I-03] Adding a returns value `orderId`
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L240
+
+## Description
+
+For convenience of working with the protocol, recommend adding a returns value `orderId` to the method `split`. 
+
+
+
+# [I-04] Ineffective TWAP implementation
+
+The contracts `MicrogridNFTDeposit` and `MarketplaceInteract` uses prices based on `twap` from oracle. Despite the fact that the Oracle contract (0x0Fe57361B0E3Fc7F61972BD839Ddaa8Da3E691D2) is out of scope, we would like to draw attention to the fact that the `twap` was not implemented effectively enough. In particular, the `twap` window and order of `observations` are not defined.
+
+
+
+
+
+
