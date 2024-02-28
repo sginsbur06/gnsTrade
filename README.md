@@ -1,6 +1,6 @@
 <br/>
 <p align="center">
-<img src="./report-image.png" width="400" alt="Start">
+<img src="./report-image.png" width="400">
 </a>
 </p>
 <br/>
