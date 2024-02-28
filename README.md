@@ -1,3 +1,11 @@
+<br/>
+<p align="center">
+<img src="./report-image.png" width="400" alt="Chainlink Brownie logo">
+</a>
+</p>
+<br/>
+
+
 # Introduction
 
 A security review of the **EMP Fusion** protocol was done by **Reviewer**, with a focus on the security aspects of the application's implementation.
