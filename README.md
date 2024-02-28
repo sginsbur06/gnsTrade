@@ -6,11 +6,16 @@
 | **Likelihood: Medium** | High         | Medium         | Low         |
 | **Likelihood: Low**    | Medium       | Low            | Low         |
 
+
 **Impact** - the technical, economic and reputation damage of a successful attack
   - High - Funds are ***directly*** at risk, or ***severe*** disruption of the protocol's core functionality
-
+  - Medium - Funds are ***indirectly*** at risk, or ***some*** disruption of the protocol's functionality
+  - Low - Funds are ***not*** at risk
 
 **Likelihood** - the chance that a particular vulnerability gets discovered and exploited
+  - High - Highly likely to occur
+  - Medium - Might occur under specific conditions
+  - Low - Unlikely to occur
 
 **Severity** - the overall criticality of the risk
 
