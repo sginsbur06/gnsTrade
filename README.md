@@ -1,3 +1,24 @@
+# Introduction
+
+A time-boxed security review of the **EMP Fusion** protocol was done by **Reviewer**, with a focus on the security aspects of the application's implementation.
+
+The objective of the assessment was to:
+- Identify potential security vulnerabilities within the smart contracts.
+- Verify that smart contracts functionality as intended.
+
+# Disclaimer
+
+A smart contract security review can never prove the complete absence of vulnerabilities. This review is a time, resource and expertise bound effort to find as many vulnerabilities as possible. However it can not guarantee 100% security of the protocol in any way. Any modifications to the code will require a new security review.
+
+# About **Reviewer**
+
+**Reviewer** is an independent smart contract security researcher who specializes in smart contract audits. 
+
+# About **EMP Fusion**
+
+**EMP Fusion** is a ***single asset staking ecosystem*** that provides yield back to its participants. The revenue is derived from diverse streams, internal and external to the ecosystem. This includes marketplace fees from Fusion, yield from external investments and trading, protocol fees from sister projects, and other sources.
+
+
 # Severity classification
 
 | Severity               | Impact: High | Impact: Medium | Impact: Low |
@@ -5,7 +26,6 @@
 | **Likelihood: High**   | Critical     | High           | Medium      |
 | **Likelihood: Medium** | High         | Medium         | Low         |
 | **Likelihood: Low**    | Medium       | Low            | Low         |
-
 
 **Impact** - the technical, economic and reputation damage of a successful attack
   - High - Funds are ***directly*** at risk, or ***severe*** disruption of the protocol's core functionality
@@ -22,6 +42,46 @@
 # Security Assessment Summary
 
 **_review commit hash_ - [272db20d163dc9b16b691bd98cef9cd88e10e833](https://github.com/DeFi-Gang/emp-fusion-contracts/commit/272db20d163dc9b16b691bd98cef9cd88e10e833)**
+
+### Scope
+
+The following smart contracts were in scope of the audit:
+
+- `MicrogridNFT`
+- `MicrogridNFTDeposit`
+- `MarketplaceExchange`
+- `MarketplaceInteract`
+- `MicrogridBatteryManager`
+- `MicrogridBatterySplitMyPosition`
+- `BatteryInteractSplitMyPosition`
+- `MicrogridBatteryWBNB`
+- `MicrogridBatteryWETH`
+- `BatteryInteractWBNB`
+- `BatteryInteractWETH`
+- `FusionRewardDistributor`
+- `FusionAutoClaimUpkeep`
+- `MigrateMasterNode`
+- `ExchangeRateHelper`
+- `OldFusionRewardDistributor`
+- `ERC721A`
+
+Out of scope:
+- third-party libraries and dependencies
+- other protocol contracts not listed above
+- economic attacks
+
+
+### Issues Found
+The following number of issues were found, categorized by their severity:
+
+- Critical & High: 23 issues
+- Medium: 14 issues
+- Low: 4 issues
+- Informational: 4 issues
+
+Recommend the EMP Fusion team review these findings in order of severity and pursue fixes, according to their specific remediations within this report.
+
+---
 
 # Findings Summary
 
