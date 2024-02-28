@@ -76,10 +76,10 @@ Using a combination of manual review and static analysis tools
 ### Issues Found
 The following number of issues were found, categorized by their severity:
 
-- Critical & High: 23 issues
+- Critical & High: 24 issues
 - Medium: 14 issues
 - Low: 4 issues
-- Informational: 4 issues
+- Informational: 5 issues
 
 Recommend the EMP Fusion team review these findings in order of severity and pursue fixes, according to their specific remediations within this report.
 
@@ -113,6 +113,7 @@ Recommend the EMP Fusion team review these findings in order of severity and pur
     - [[H-06] Using `tx.origin` creates an opportunity for phishing attack](#h-06-using-txorigin-creates-an-opportunity-for-phishing-attack)
     - [[H-07] Missing slippage checks, deadline check is not effective](#h-07-missing-slippage-checks-deadline-check-is-not-effective)
     - [[H-08] [H-08] Incorrect `path` array length specified](#h-08-incorrect-path-array-length-specified)
+    - [[H-09] [H-08] Storage mapping `lastClaimTime` is never initialized](#)
 
 - ## Medium Risk Findings
     - [[M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients](#m-01-additional-check-in-listclaimablereceivers-results-in-an-empty-list-of-recipients)
@@ -141,6 +142,7 @@ Recommend the EMP Fusion team review these findings in order of severity and pur
     - [[I-02] Unused method `burn`](#i-02-unused-method-burn)
     - [[I-03] Adding a returns value `orderId`](#i-03-adding-a-returns-value-orderid)
     - [[I-04] Ineffective TWAP implementation](#i-04-ineffective-twap-implementation)
+    - [[I-05] State variables could be declared immutable](#)
 
 
 
@@ -1586,6 +1588,32 @@ Change the code in the following way:
 
 
 
+# [H-09] Storage mapping `lastClaimTime` is never initialized
+
+### Relevant GitHub Links
+	
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWETH.sol
+
+## Severity
+
+**Impact:**
+Medium, as no value will be lost but the contract functionality will be limited
+
+**Likelihood:**
+High, as it happens every time
+
+## Description
+
+The storage mapping `lastClaimTime` is never initialized.
+
+## Recommendations
+
+Add to methods `run` and `runFromUpkeep` the logic that will initialize `lastClaimTime`
+
+
+
 # [M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients
 
 ### Relevant GitHub Links
@@ -1875,6 +1903,8 @@ Implement a mechanism to check the heartbeat of the price feed and compare it ag
 
 https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L932
 
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1255
+
 ## Severity
 
 **Impact:**
@@ -1895,6 +1925,8 @@ However, using require() to check transfer return values could lead to issues wi
 MarketplaceInteract.sol
 
 [L945:](https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L945) `IERC20(token).transferFrom(msg.sender, address(marketplaceContract), amount);`
+
+[L1326:](https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1326) `(IERC20(currency)).transferFrom(msg.sender, address(microgridNFTContract), amount);;`
 
 ## Recommendations
 
@@ -2042,6 +2074,10 @@ https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/Mic
 
 https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L356
 
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1332
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L971
+
 ## Severity
 
 **Impact:**
@@ -2052,7 +2088,7 @@ Low, as it occurs only in this method
 
 ## Description
 
-When withdrawing BNB, the `BatteryInteractSplitMyPosition` contract uses Solidity’s `transfer` function. This has some notable shortcomings when the withdrawer is a smart contract, which can render BNB impossible to withdraw. Specifically, the withdrawal will inevitably fail when:
+When withdrawing BNB, the `BatteryInteractSplitMyPosition`, `MicrogridNFTDeposit`, `MarketplaceInteract` contracts use Solidity’s `transfer` function. This has some notable shortcomings when the withdrawer is a smart contract, which can render BNB impossible to withdraw. Specifically, the withdrawal will inevitably fail when:
 
   - The withdrawer smart contract does not implement a payable fallback function.
   - The withdrawer smart contract implements a payable fallback function which uses more than 2300 gas units.
@@ -2136,6 +2172,33 @@ https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/Mic
 
 https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFT.sol#L336
 
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPositionInteract.sol#L409
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1429
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1433
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L881
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/FusionRewardDistributor.sol#L87
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MarketplaceInteract.sol#L1018
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPosition.sol#L150
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatterySplitMyPosition.sol#L177
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWBNB.sol#L150
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWBNB.sol#L177
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWETH.sol#L150
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWETH.sol#L177
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/OldFusionRewardDistributor.sol#L88
+
+
 ## Severity
 
 **Impact:**
@@ -2158,6 +2221,19 @@ a best practice. A wrong user input or defaulting to the zero addresses for a mi
   - `MicrogridNFT.setWhitelistedContracts` 
   - `MicrogridNFT.setCompoundContract` 
   - `MicrogridNFT.setSigner` 
+  - `BatteryInteractSplitMyPosition.setTreasury` 
+  - `WBNBBatteryInteract.setUpkeepContract` 
+  - `WETHBatteryInteract.setUpkeepContract` 
+  - `ExchangeRateHelper.constructor` 
+  - `FusionRewardDistributor.setBatteryManagerContract` 
+  - `MarketplaceInteract.setWrapped` 
+  - `MicrogridBatterySplitMyPosition.setInteractContract` 
+  - `MicrogridBatterySplitMyPosition.setUpgradeBatteryContract` 
+  - `MicrogridBatteryWBNB.setInteractContract` 
+  - `MicrogridBatteryWBNB.setUpgradeBatteryContract` 
+  - `MicrogridBatteryWETH.setInteractContract` 
+  - `MicrogridBatteryWETH.setUpgradeBatteryContract` 
+  - `OldFusionRewardDistributor.setBatteryManagerContract` 
 
 ## Recommendations
 
@@ -2271,6 +2347,10 @@ https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBN
 
 https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L896
 
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWBNB.sol#L106
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridBatteryWETH.sol#L106
+
 ## Description
 
 The `AggregatorV3Interface` interface in `MarketplaceInteract` is not used anywhere and should be removed.
@@ -2319,6 +2399,10 @@ The `batteriesActive` storage mapping in `WETHBatteryInteract` is not used anywh
 
 The `setReceiver` function in `IFusionRewardDistributor` is not used anywhere and should be removed.
 
+The `revealed` storage variable in `MicrogridBatteryWBNB` is not used anywhere and should be removed.
+
+The `revealed` storage variable in `WETHBatteryInteract` is not used anywhere and should be removed.
+
 ## Recommendations
 
 It is recommended to remove any unused code or provide valid recommendations and suggestions on the documentation on how to use those.  
@@ -2365,3 +2449,34 @@ The contracts `MicrogridNFTDeposit` and `MarketplaceInteract` uses prices based 
 
 
 
+# [I-05] State variables could be declared immutable
+
+### Relevant GitHub Links
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WBNBBatteryInteract.sol#L1248
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/WETHBatteryInteract.sol#L1248
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/ExchangeRateHelper.sol#L856
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L998-L1000
+
+https://github.com/DeFi-Gang/emp-fusion-contracts/blob/main/contracts/fusion/MicrogridNFTDeposit.sol#L1022
+
+## Description
+
+State variables that are not updated following deployment should be declared immutable to save gas.
+
+The `pancakeRouter` storage variable in `WBNBBatteryInteract` should be immutable.
+
+The `pancakeRouter` storage variable in `WETHBatteryInteract` should be immutable.
+
+The `wrapped` storage variable in `ExchangeRateHelper` should be immutable.
+
+The `empEthLpToken` storage variable in `MicrogridNFTDeposit` should be immutable.
+
+The `empToken` storage variable in `MicrogridNFTDeposit` should be immutable.
+
+The `microgridNFTContract` storage variable in `MicrogridNFTDeposit` should be immutable.
+
+The `wrapped` storage variable in `MicrogridNFTDeposit` should be immutable.
