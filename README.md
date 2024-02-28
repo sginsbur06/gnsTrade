@@ -113,7 +113,7 @@ Recommend the EMP Fusion team review these findings in order of severity and pur
     - [[H-06] Using `tx.origin` creates an opportunity for phishing attack](#h-06-using-txorigin-creates-an-opportunity-for-phishing-attack)
     - [[H-07] Missing slippage checks, deadline check is not effective](#h-07-missing-slippage-checks-deadline-check-is-not-effective)
     - [[H-08] Incorrect `path` array length specified](#h-08-incorrect-path-array-length-specified)
-    - [[H-09] Storage mapping `lastClaimTime` is never initialized](#)
+    - [[H-09] Storage mapping `lastClaimTime` is never initialized](#h-09-storage-mapping-lastclaimtime-is-never-initialized)
 
 - ## Medium Risk Findings
     - [[M-01] Additional check in `listClaimableReceivers` results in an empty list of recipients](#m-01-additional-check-in-listclaimablereceivers-results-in-an-empty-list-of-recipients)
@@ -142,7 +142,7 @@ Recommend the EMP Fusion team review these findings in order of severity and pur
     - [[I-02] Unused method `burn`](#i-02-unused-method-burn)
     - [[I-03] Adding a returns value `orderId`](#i-03-adding-a-returns-value-orderid)
     - [[I-04] Ineffective TWAP implementation](#i-04-ineffective-twap-implementation)
-    - [[I-05] State variables could be declared immutable](#)
+    - [[I-05] State variables could be declared immutable](#i-05-state-variables-could-be-declared-immutable)
 
 
 
