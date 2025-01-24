@@ -2,12 +2,7 @@
 
 
 - [About](#about)
-- [Getting Started](#getting-started)
-  - [Requirements](#requirements)
-  - [Quickstart](#quickstart)
-- [Usage](#usage)
-  - [Testing](#testing)
-    - [Test Coverage](#test-coverage)
+- [Main Changes](#main-changes)
 - [Audit Scope Details](#audit-scope-details)
   - [Roles](#roles)
   - [Known Issues](#known-issues)
