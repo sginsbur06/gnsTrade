@@ -24,10 +24,12 @@ For the development of MorhexV3, a protocol [PancakeSwap V3](https://github.com/
 - renaming according to protocol style (MorhexV3)
 - update solidity version to 0.8.24
 - some code changes to meet the requirements of the new solidity version
+- added functionality that allows to create farms with multiple reward tokens
+- added functionality that allows to create farms with different reward tokens
 
 # Audit Scope Details
 
-- Commit Hash: 9deec1946489e7a2497282ed43b1ea5353d36538
+- Commit Hash: 61c00e009f6771383d15a4b01de015c27540068a
 - In Scope:
 ```
 #-- masterchef-v3
