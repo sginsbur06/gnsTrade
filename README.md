@@ -22,7 +22,7 @@ A high-level overview of MorhexV3 main features includes swapping, yield farming
 
 2. **Farming**: This is one of the core functionalities of MorhexV3, it's a way to generate rewards for MorhexV3. In simple terms, it involves lending your LP position to protocol. Liquidity providers earn Reward tokens for the proportion of the LP position that they stake. The more a user stakes, the more rewards they can reap.
 
-For the development of MorhexV3, a protocol PancakeSwap V3 (commit [commit](projects)) was chosen as a starting point
+For the development of MorhexV3, a protocol PancakeSwap V3 (commit [commit](https://github.com/pancakeswap/pancake-v3-contracts/tree/main/projects)) was chosen as a starting point
 
 In sum, PancakeSwap V3 has various functionalities that allow users to earn and maximize returns, making it one of the leading DEXs on the Binance Smart Chain network. As a DEX, it leverages its community for decision-making and development, rather than being controlled by a single entity, bringing decentralization to the fore.
 
